@@ -1,0 +1,14 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro'
+import App from '../components/App.svelte';
+---
+
+<Layout title="Digitizer">
+	<main>
+		<Header />
+		<App client:load/>
+	</main>
+</Layout>
+<style>
+</style>
