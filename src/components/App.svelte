@@ -43,8 +43,11 @@
 	async function uploadImage() {
 		const formData = new FormData();
 		formData.append("file", files[0]);
-		formData.append("mode", selectedMode);
-		formData.append("threshold", threshold);
+		formData.append("filterWhiteEnabled", filterWhiteEnabled)
+		formData.append("whiteFilterMode", selectedWhiteFilterMode)
+		formData.append("whiteFilterThresshold", threshold)
+		formData.append("removeBackgroundEnabled", removeBackgroundEnabled)
+		formData.append("backgroundRemovalMode", selectedBackgroundRemovalMode)
 		try {
 			loading = true;
 			const response = await fetch(`${SERVER_URL}/upload`, {
@@ -228,7 +231,9 @@
 		box-sizing: border-box;
 		display: flex;
 		flex-direction: column;
+		justify-content: center;
 		gap: 20px;
+		height: 200px;
 	}
 
 	.button_item {
