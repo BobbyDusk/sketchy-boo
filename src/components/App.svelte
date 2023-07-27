@@ -1,6 +1,6 @@
 <script>
 //	const SERVER_URL = "http://localhost:8080";
-	const SERVER_URL = "http://digitizer.api.edgeofdusk.com";
+	const SERVER_URL = "https://api.edgeofdusk.com/digitizer";
 	let files;
 	let selectedMode;
 	let threshold = 90;
