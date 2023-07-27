@@ -1,21 +1,25 @@
 <script>
-//	const SERVER_URL = "http://localhost:8000";
-	const SERVER_URL = "http://digitizer.api.edgeofdusk.com";
+	const SERVER_URL = "http://localhost:8000";
+	//	const SERVER_URL = "http://digitizer.api.edgeofdusk.com";
+	const WHITE_FILTER_MODES= ["luminocity", "average", "lightness"];
+	const BACKGROUND_REMOVAL_MODES = ["u2net", "u2netp", "u2net_human_seg", "u2net_cloth_seg", "silueta", "isnet_general_use", "isnet_anime", "sam"]
+
 	let files;
-	let selectedMode;
+	let selectedWhiteFilterMode = "luminocity";
+	let selectedBackgroundRemovalMode = "u2net";
 	let threshold = 90;
 	let originalImageSource;
 	let processedImageSource;
 	let proposedFileName = "processed.png";
 	let loading = false;
+	let filterWhiteEnabled = true;
+	let removeBackgroundEnabled = true;
 
 	$: if (files && files[0]) {
 		proposedFileName = `${getBaseFilenameWithoutExtension(
 			files[0].name
 		)}_processed.png`;
 	}
-
-	const modes = ["luminocity", "average", "lightness"];
 
 	$: if (files && files[0]) {
 		const reader = new FileReader();
@@ -67,12 +71,11 @@
 </script>
 
 <div class="app_root">
-	<div class="row">
-		<div class="process_buttons left">
+	<div class="buttons_container">
+		<div class="button_group">
 			<div class="button_item">
 				<label for="images">Select images:</label>
 				<input
-					class="button"
 					accept="image/png, image/jpeg"
 					bind:files
 					id="images"
@@ -80,21 +83,32 @@
 					type="file"
 				/>
 			</div>
-			<div class="button_item">
+		</div>
+		<div class="button_group">
+			<div class="button_item_horizontal">
+				<input
+					type="checkbox"
+					id="enable_filter_white"
+					name="enable_filter_white"
+					bind:checked={filterWhiteEnabled}
+				/>
+				<label for="enable_filter_white">enable filter white</label>
+			</div>
+			<div class="button_item {!filterWhiteEnabled && 'disabled'}">
 				<label for="mode">mode:</label>
 				<select
 					name="mode"
-					bind:value={selectedMode}
+					bind:value={selectedWhiteFilterMode}
 					class="button-item"
 				>
-					{#each modes as mode}
+					{#each WHITE_FILTER_MODES as mode}
 						<option value={mode}>
 							{mode}
 						</option>
 					{/each}
 				</select>
 			</div>
-			<div class="button_item">
+			<div class="button_item {!filterWhiteEnabled && 'disabled'}">
 				<label for="threshold">threshold</label>
 				<div class="threshold_container">
 					<input
@@ -109,25 +123,56 @@
 					<p class="threshold_text">{threshold}</p>
 				</div>
 			</div>
+		</div>
+		<div class="button_group">
+			<div class="button_item_horizontal">
+				<input
+					type="checkbox"
+					id="enable_background_removal"
+					name="enable_background_removal"
+					bind:checked={removeBackgroundEnabled}
+				/>
+				<label for="enable_background_removal"
+					>enable background removal</label
+				>
+			</div>
+			<div class="button_item {!removeBackgroundEnabled && 'disabled'}">
+				<label for="mode">mode:</label>
+				<select
+					name="mode"
+					bind:value={selectedBackgroundRemovalMode}
+					class="button-item"
+				>
+					{#each BACKGROUND_REMOVAL_MODES as mode}
+						<option value={mode}>
+							{mode}
+						</option>
+					{/each}
+				</select>
+			</div>
+		</div>
+
+		<div class="button_group">
 			{#if loading}
 				<div class="loader" />
 			{:else}
-				<button class="button_item" on:click={uploadImage}>
+				<button class="button_item button" on:click={uploadImage}>
 					process
 				</button>
 			{/if}
 		</div>
-		<div class="result_buttons right">
-			{#if processedImageSource}
+		{#if processedImageSource}
+			<div class="button_group">
 				<a
 					target="_blank"
 					href={processedImageSource}
 					download={proposedFileName}
+					class="button_item button"
 				>
 					Download
 				</a>
-			{/if}
-		</div>
+			</div>
+		{/if}
 	</div>
 
 	<div class="row">
@@ -167,7 +212,55 @@
 		align-items: stretch;
 	}
 
-	.row {
+	.buttons_container {
+		width: 100%;
+		display: flex;
+		flex-direction: row;
+		justify-content: center;
+		align-items: center;
+		gap: 10px;
+	}
+
+	.button_group {
+		border: 1px solid black;
+		border-radius: 15px;
+		padding: 20px;
+		box-sizing: border-box;
+		display: flex;
+		flex-direction: column;
+		gap: 20px;
+	}
+
+	.button_item {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 8px;
+	}
+
+	.button_item_horizontal {
+		display: flex;
+		flex-direction: row;
+		justify-content: center;
+		gap: 8px;
+	}
+
+	.button {
+		border: none;
+		border-radius: 10px;
+		padding: 15px 30px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 12pt;
+	}
+
+	.button:hover {
+		filter: brightness(0.8);
+		cursor: pointer;
+	}
+
+	.image_row {
 		width: 100%;
 		display: grid;
 		grid-template-columns: 1fr 1fr;
@@ -187,13 +280,6 @@
 
 	.right {
 		grid-column: 2;
-	}
-
-	.button_item {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		gap: 5px;
 	}
 
 	.process_buttons {
@@ -320,5 +406,9 @@
 		100% {
 			transform: rotate(360deg);
 		}
+	}
+
+	.disabled {
+		opacity: 0.4;
 	}
 </style>
