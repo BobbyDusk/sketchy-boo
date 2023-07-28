@@ -22,7 +22,19 @@
 	let originalImageSource;
 	let processedImageSource;
 	let proposedFileName = "processed.png";
+	let point;
 	let loading = false;
+
+	function getBase64File() {
+   		let reader = new FileReader();
+   		reader.readAsDataURL(files[0]);
+   		reader.onload = function () {
+   		  console.log(reader.result);
+   		};
+   		reader.onerror = function (error) {
+   		  console.log('Error: ', error);
+   		};
+	}
 
 	$: if (files && files[0]) {
 		proposedFileName = `${getBaseFilenameWithoutExtension(
@@ -50,6 +62,26 @@
 	}
 
 	async function uploadImage() {
+		file_base64 = getBase64File()
+		const data = {
+			image: file_base64,
+			filterWhiteEnabled, 
+			selectedFilterWhiteMode,
+			filterWhiteThreshold,
+			removeBackgroundEnabled,
+			selectedRemoveBackgroundMode,
+			point
+		}
+		const response = await fetch(`${SERVER_URL}/upload`, {
+			method: "POST",
+			headers: {
+				"Accept": "application/json",
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify({a: "test", b: true, c: [1, "two"]}),
+		});
+		return
+
 		const formData = new FormData();
 		formData.append("file", files[0]);
 		formData.append("filterWhiteEnabled", filterWhiteEnabled);
@@ -57,6 +89,7 @@
 		formData.append("filterWhiteThreshold", filterWhiteThreshold);
 		formData.append("removeBackgroundEnabled", removeBackgroundEnabled);
 		formData.append("removeBackgroundMode", selectedRemoveBackgroundMode);
+		formData.append("point", point);
 		try {
 			loading = true;
 			const response = await fetch(`${SERVER_URL}/upload`, {
@@ -79,6 +112,23 @@
 		} finally {
 			loading = false;
 		}
+	}
+
+	function getPosition(e) {
+		console.log(e.target);
+		let rect = e.target.getBoundingClientRect();
+		let relativePointX = e.clientX - rect.left; //x position within the element.
+		let relativePointY = e.clientY - rect.top; //y position within the element.
+		let img = new Image();
+		img.src = originalImageSource;
+		let pointX = Math.round(
+			(relativePointX / e.target.clientWidth) * img.width
+		);
+		let pointY = Math.round(
+			(relativePointY / e.target.clientHeight) * img.height
+		);
+		point = [pointY, pointX];
+		console.log(point);
 	}
 </script>
 
@@ -195,8 +245,10 @@
 				<img
 					src={originalImageSource}
 					alt="selected img"
-					class="image"
+					class="original_image image"
+					on:mouseup={getPosition}
 				/>
+				<div class="point" />
 			{:else}
 				<p>No image selected</p>
 			{/if}
@@ -212,6 +264,7 @@
 		</div>
 	</div>
 </div>
+
 <style>
 	.app_root {
 		width: 100%;
@@ -335,6 +388,11 @@
 	.image {
 		width: 40vw;
 	}
+
+	.original_image {
+		position: relative;
+	}
+
 	.checkered {
 		background: -webkit-linear-gradient(
 				45deg,
@@ -424,6 +482,10 @@
 		100% {
 			transform: rotate(360deg);
 		}
+	}
+
+	.point {
+		position: absolute;
 	}
 
 	.disabled {
