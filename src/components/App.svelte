@@ -1,19 +1,28 @@
 <script>
 	const SERVER_URL = "http://localhost:8000";
 	//	const SERVER_URL = "http://digitizer.api.edgeofdusk.com";
-	const WHITE_FILTER_MODES= ["luminocity", "average", "lightness"];
-	const BACKGROUND_REMOVAL_MODES = ["u2net", "u2netp", "u2net_human_seg", "u2net_cloth_seg", "silueta", "isnet_general_use", "isnet_anime", "sam"]
+	const WHITE_FILTER_MODES = ["luminocity", "average", "lightness"];
+	const BACKGROUND_REMOVAL_MODES = [
+		"u2net",
+		"u2netp",
+		// "u2net_human_seg",
+		// "u2net_cloth_seg",
+		"silueta",
+		"isnet_general_use",
+		"isnet_anime",
+		"sam",
+	];
 
 	let files;
-	let selectedWhiteFilterMode = "luminocity";
-	let selectedBackgroundRemovalMode = "u2net";
-	let threshold = 90;
+	let removeBackgroundEnabled = true;
+	let selectedRemoveBackgroundMode = "u2net";
+	let filterWhiteEnabled = true;
+	let selectedFilterWhiteMode = "luminocity";
+	let filterWhiteThreshold = 90;
 	let originalImageSource;
 	let processedImageSource;
 	let proposedFileName = "processed.png";
 	let loading = false;
-	let filterWhiteEnabled = true;
-	let removeBackgroundEnabled = true;
 
 	$: if (files && files[0]) {
 		proposedFileName = `${getBaseFilenameWithoutExtension(
@@ -43,11 +52,11 @@
 	async function uploadImage() {
 		const formData = new FormData();
 		formData.append("file", files[0]);
-		formData.append("filterWhiteEnabled", filterWhiteEnabled)
-		formData.append("whiteFilterMode", selectedWhiteFilterMode)
-		formData.append("whiteFilterThresshold", threshold)
-		formData.append("removeBackgroundEnabled", removeBackgroundEnabled)
-		formData.append("backgroundRemovalMode", selectedBackgroundRemovalMode)
+		formData.append("filterWhiteEnabled", filterWhiteEnabled);
+		formData.append("filterWhiteMode", selectedFilterWhiteMode);
+		formData.append("filterWhiteThreshold", filterWhiteThreshold);
+		formData.append("removeBackgroundEnabled", removeBackgroundEnabled);
+		formData.append("removeBackgroundMode", selectedRemoveBackgroundMode);
 		try {
 			loading = true;
 			const response = await fetch(`${SERVER_URL}/upload`, {
@@ -87,46 +96,7 @@
 				/>
 			</div>
 		</div>
-		<div class="button_group">
-			<div class="button_item_horizontal">
-				<input
-					type="checkbox"
-					id="enable_filter_white"
-					name="enable_filter_white"
-					bind:checked={filterWhiteEnabled}
-				/>
-				<label for="enable_filter_white">enable filter white</label>
-			</div>
-			<div class="button_item {!filterWhiteEnabled && 'disabled'}">
-				<label for="mode">mode:</label>
-				<select
-					name="mode"
-					bind:value={selectedWhiteFilterMode}
-					class="button-item"
-				>
-					{#each WHITE_FILTER_MODES as mode}
-						<option value={mode}>
-							{mode}
-						</option>
-					{/each}
-				</select>
-			</div>
-			<div class="button_item {!filterWhiteEnabled && 'disabled'}">
-				<label for="threshold">threshold</label>
-				<div class="threshold_container">
-					<input
-						type="range"
-						bind:value={threshold}
-						name="threshold"
-						class="threshold"
-						min="0"
-						max="100"
-						step="1"
-					/>
-					<p class="threshold_text">{threshold}</p>
-				</div>
-			</div>
-		</div>
+
 		<div class="button_group">
 			<div class="button_item_horizontal">
 				<input
@@ -143,7 +113,7 @@
 				<label for="mode">mode:</label>
 				<select
 					name="mode"
-					bind:value={selectedBackgroundRemovalMode}
+					bind:value={selectedRemoveBackgroundMode}
 					class="button-item"
 				>
 					{#each BACKGROUND_REMOVAL_MODES as mode}
@@ -152,6 +122,47 @@
 						</option>
 					{/each}
 				</select>
+			</div>
+		</div>
+
+		<div class="button_group">
+			<div class="button_item_horizontal">
+				<input
+					type="checkbox"
+					id="enable_filter_white"
+					name="enable_filter_white"
+					bind:checked={filterWhiteEnabled}
+				/>
+				<label for="enable_filter_white">enable filter white</label>
+			</div>
+			<div class="button_item {!filterWhiteEnabled && 'disabled'}">
+				<label for="mode">mode:</label>
+				<select
+					name="mode"
+					bind:value={selectedFilterWhiteMode}
+					class="button-item"
+				>
+					{#each WHITE_FILTER_MODES as mode}
+						<option value={mode}>
+							{mode}
+						</option>
+					{/each}
+				</select>
+			</div>
+			<div class="button_item {!filterWhiteEnabled && 'disabled'}">
+				<label for="threshold">threshold</label>
+				<div class="threshold_container">
+					<input
+						type="range"
+						bind:value={filterWhiteThreshold}
+						name="threshold"
+						class="threshold"
+						min="0"
+						max="100"
+						step="1"
+					/>
+					<p class="threshold_text">{filterWhiteThreshold}</p>
+				</div>
 			</div>
 		</div>
 
@@ -178,7 +189,7 @@
 		{/if}
 	</div>
 
-	<div class="row">
+	<div class="image_row">
 		<div class="image_container">
 			{#if originalImageSource}
 				<img
@@ -201,7 +212,6 @@
 		</div>
 	</div>
 </div>
-
 <style>
 	.app_root {
 		width: 100%;
@@ -225,7 +235,7 @@
 	}
 
 	.button_group {
-		border: 1px solid black;
+		/* border: 1px solid black; */
 		border-radius: 15px;
 		padding: 20px;
 		box-sizing: border-box;
@@ -258,6 +268,9 @@
 		align-items: center;
 		justify-content: center;
 		font-size: 12pt;
+		color: black;
+		text-decoration: none;
+		background-color: lightgray;
 	}
 
 	.button:hover {
@@ -320,7 +333,7 @@
 	}
 
 	.image {
-		width: 300px;
+		width: 40vw;
 	}
 	.checkered {
 		background: -webkit-linear-gradient(
