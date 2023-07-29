@@ -19,21 +19,24 @@
 	let filterWhiteEnabled = true;
 	let selectedFilterWhiteMode = "luminocity";
 	let filterWhiteThreshold = 90;
-	let originalImageSource;
+	let originalImageBase64;
 	let processedImageSource;
 	let proposedFileName = "processed.png";
 	let point;
 	let loading = false;
 
-	function getBase64File() {
-   		let reader = new FileReader();
-   		reader.readAsDataURL(files[0]);
-   		reader.onload = function () {
-   		  console.log(reader.result);
-   		};
-   		reader.onerror = function (error) {
-   		  console.log('Error: ', error);
-   		};
+	function getBase64Image() {
+		return new Promise((resolve, reject) => {
+			let reader = new FileReader();
+			reader.readAsDataURL(files[0]);
+			reader.onload = () => {
+				resolve(reader.result);
+			};
+			reader.onerror = (error) => {
+				console.log("Error: ", error);
+				reject();
+			};
+		});
 	}
 
 	$: if (files && files[0]) {
@@ -43,11 +46,7 @@
 	}
 
 	$: if (files && files[0]) {
-		const reader = new FileReader();
-		reader.readAsDataURL(files[0]);
-		reader.onload = () => {
-			originalImageSource = reader.result;
-		};
+		getBase64Image().then(result => originalImageBase64 = result)
 	}
 
 	function getBaseFilenameWithoutExtension(filename) {
@@ -62,45 +61,26 @@
 	}
 
 	async function uploadImage() {
-		file_base64 = getBase64File()
-		const data = {
-			image: file_base64,
-			filterWhiteEnabled, 
-			selectedFilterWhiteMode,
-			filterWhiteThreshold,
-			removeBackgroundEnabled,
-			selectedRemoveBackgroundMode,
-			point
-		}
-		const response = await fetch(`${SERVER_URL}/upload`, {
-			method: "POST",
-			headers: {
-				"Accept": "application/json",
-				"Content-Type": "application/json",
-			},
-			body: JSON.stringify({a: "test", b: true, c: [1, "two"]}),
-		});
-		return
-
-		const formData = new FormData();
-		formData.append("file", files[0]);
-		formData.append("filterWhiteEnabled", filterWhiteEnabled);
-		formData.append("filterWhiteMode", selectedFilterWhiteMode);
-		formData.append("filterWhiteThreshold", filterWhiteThreshold);
-		formData.append("removeBackgroundEnabled", removeBackgroundEnabled);
-		formData.append("removeBackgroundMode", selectedRemoveBackgroundMode);
-		formData.append("point", point);
 		try {
 			loading = true;
+			const data = {
+				image: originalImageBase64,
+				filterWhiteEnabled,
+				filterWhiteMode: selectedFilterWhiteMode,
+				filterWhiteThreshold,
+				removeBackgroundEnabled,
+				removeBackgroundMode: selectedRemoveBackgroundMode,
+				point,
+			};
 			const response = await fetch(`${SERVER_URL}/upload`, {
 				method: "POST",
-				body: formData,
+				headers: {
+					Accept: "application/json",
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify(data),
 			});
-			response.headers.forEach(console.log);
 			if (response.headers.get("content-type") == "image/png") {
-				console.log(response);
-				console.log(response.body);
-				response.headers.forEach(console.log);
 				processedImageSource = URL.createObjectURL(response.body);
 			} else {
 				const data = await response.json();
@@ -112,6 +92,7 @@
 		} finally {
 			loading = false;
 		}
+		return
 	}
 
 	function getPosition(e) {
@@ -120,7 +101,7 @@
 		let relativePointX = e.clientX - rect.left; //x position within the element.
 		let relativePointY = e.clientY - rect.top; //y position within the element.
 		let img = new Image();
-		img.src = originalImageSource;
+		img.src = originalImageBase64;
 		let pointX = Math.round(
 			(relativePointX / e.target.clientWidth) * img.width
 		);
@@ -241,9 +222,9 @@
 
 	<div class="image_row">
 		<div class="image_container">
-			{#if originalImageSource}
+			{#if originalImageBase64}
 				<img
-					src={originalImageSource}
+					src={originalImageBase64}
 					alt="selected img"
 					class="original_image image"
 					on:mouseup={getPosition}
