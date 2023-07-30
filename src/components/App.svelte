@@ -1,8 +1,8 @@
-<script>
-	const SERVER_URL = "http://localhost:8000";
+<script lang="ts">
+	const SERVER_URL:string = "http://localhost:8000";
 	//	const SERVER_URL = "http://digitizer.api.edgeofdusk.com";
-	const WHITE_FILTER_MODES = ["luminocity", "average", "lightness"];
-	const BACKGROUND_REMOVAL_MODES = [
+	const WHITE_FILTER_MODES:string[] = ["luminocity", "average", "lightness"];
+	const BACKGROUND_REMOVAL_MODES:string[] = [
 		"u2net",
 		"u2netp",
 		// "u2net_human_seg",
@@ -13,19 +13,19 @@
 		"sam",
 	];
 
-	let files;
-	let removeBackgroundEnabled = true;
-	let selectedRemoveBackgroundMode = "u2net";
-	let filterWhiteEnabled = true;
-	let selectedFilterWhiteMode = "luminocity";
-	let filterWhiteThreshold = 90;
-	let originalImageBase64;
-	let processedImageSource;
-	let proposedFileName = "processed.png";
-	let point;
-	let loading = false;
+	let files:FileList;
+	let removeBackgroundEnabled:boolean = true;
+	let selectedRemoveBackgroundMode:string = "u2net";
+	let filterWhiteEnabled:boolean = true;
+	let selectedFilterWhiteMode:string = "luminocity";
+	let filterWhiteThreshold:number = 90;
+	let originalImageBase64:string;
+	let processedImageSource:string;
+	let proposedFileName:string = "processed.png";
+	let points:number[][] = [];
+	let loading:boolean = false;
 
-	function getBase64Image() {
+	function getBase64Image(): Promise<any> {
 		return new Promise((resolve, reject) => {
 			let reader = new FileReader();
 			reader.readAsDataURL(files[0]);
@@ -49,18 +49,18 @@
 		getBase64Image().then(result => originalImageBase64 = result)
 	}
 
-	function getBaseFilenameWithoutExtension(filename) {
+	function getBaseFilenameWithoutExtension(filename:string): string {
 		// Remove the path (if any) and then remove the extension
-		const baseFilename = filename
-			.split("/")
-			.pop()
+		const baseFilename = filename!
+			.split("/")!
+			.pop()!
 			.split(".")
 			.slice(0, -1)
 			.join(".");
 		return baseFilename;
 	}
 
-	async function uploadImage() {
+	async function uploadImage(): Promise<undefined> {
 		try {
 			loading = true;
 			const data = {
@@ -70,7 +70,7 @@
 				filterWhiteThreshold,
 				removeBackgroundEnabled,
 				removeBackgroundMode: selectedRemoveBackgroundMode,
-				point,
+				points,
 			};
 			const response = await fetch(`${SERVER_URL}/upload`, {
 				method: "POST",
@@ -95,20 +95,22 @@
 		return
 	}
 
-	function getPosition(e) {
+	function getPosition(e:MouseEvent) {
 		console.log(e.target);
-		let rect = e.target.getBoundingClientRect();
+		let target:HTMLElement = e.target as HTMLElement
+		let rect = target.getBoundingClientRect();
 		let relativePointX = e.clientX - rect.left; //x position within the element.
 		let relativePointY = e.clientY - rect.top; //y position within the element.
 		let img = new Image();
 		img.src = originalImageBase64;
 		let pointX = Math.round(
-			(relativePointX / e.target.clientWidth) * img.width
+			(relativePointX / target.clientWidth) * img.width
 		);
 		let pointY = Math.round(
-			(relativePointY / e.target.clientHeight) * img.height
+			(relativePointY / target.clientHeight) * img.height
 		);
-		point = [pointY, pointX];
+		let point = [pointX, pointY];
+		points.push(point)
 		console.log(point);
 	}
 </script>
