@@ -1,23 +1,24 @@
 <script lang="ts">
 	const SERVER_URL:string = "http://localhost:8000";
 	//	const SERVER_URL = "http://digitizer.api.edgeofdusk.com";
-	const WHITE_FILTER_MODES:string[] = ["luminocity", "average", "lightness"];
-	const BACKGROUND_REMOVAL_MODES:string[] = [
+	const WHITE_FILTER_MODELS:string[] = ["luminocity", "average", "lightness"];
+	// TODO: the sam model seems awesome, but there is currently a bug. Implement it once fixed
+	// see https://github.com/danielgatis/rembg/issues/459
+	const BACKGROUND_REMOVAL_MODELS:string[] = [
 		"u2net",
 		"u2netp",
-		// "u2net_human_seg",
-		// "u2net_cloth_seg",
 		"silueta",
 		"isnet_general_use",
 		"isnet_anime",
-		"sam",
+		// "sam", TODO: enable once fixed
 	];
 
 	let files:FileList;
 	let removeBackgroundEnabled:boolean = true;
-	let selectedRemoveBackgroundMode:string = "u2net";
+	let selectedRemoveBackgroundModel:string = "u2net";
+	let removeBackgroundPostProcessEnabled:boolean = true;
 	let filterWhiteEnabled:boolean = true;
-	let selectedFilterWhiteMode:string = "luminocity";
+	let selectedFilterWhiteModel:string = "luminocity";
 	let filterWhiteThreshold:number = 90;
 	let originalImageBase64:string;
 	let processedImageSource:string;
@@ -63,14 +64,22 @@
 	async function uploadImage(): Promise<undefined> {
 		try {
 			loading = true;
+			const filterWhite = {
+				enabled: filterWhiteEnabled,
+				model: selectedFilterWhiteModel,
+				threshold: filterWhiteThreshold
+			}
+			const removeBackground = {
+				enabled: removeBackgroundEnabled,
+				model: selectedRemoveBackgroundModel,
+				postProcess: removeBackgroundPostProcessEnabled,
+				points,
+
+			}
 			const data = {
 				image: originalImageBase64,
-				filterWhiteEnabled,
-				filterWhiteMode: selectedFilterWhiteMode,
-				filterWhiteThreshold,
-				removeBackgroundEnabled,
-				removeBackgroundMode: selectedRemoveBackgroundMode,
-				points,
+				filterWhite,
+				removeBackground
 			};
 			const response = await fetch(`${SERVER_URL}/upload`, {
 				method: "POST",
@@ -80,13 +89,9 @@
 				},
 				body: JSON.stringify(data),
 			});
-			if (response.headers.get("content-type") == "image/png") {
-				processedImageSource = URL.createObjectURL(response.body);
-			} else {
-				const data = await response.json();
-				processedImageSource = data.image;
-				console.log(data.message);
-			}
+			const responseData = await response.json();
+			processedImageSource = responseData.image;
+			console.log(responseData.message);
 		} catch (error) {
 			console.log(`Error: ${error}`);
 		} finally {
@@ -143,18 +148,29 @@
 				>
 			</div>
 			<div class="button_item {!removeBackgroundEnabled && 'disabled'}">
-				<label for="mode">mode:</label>
+				<label for="model">model:</label>
 				<select
-					name="mode"
-					bind:value={selectedRemoveBackgroundMode}
+					name="model"
+					bind:value={selectedRemoveBackgroundModel}
 					class="button-item"
 				>
-					{#each BACKGROUND_REMOVAL_MODES as mode}
-						<option value={mode}>
-							{mode}
+					{#each BACKGROUND_REMOVAL_MODELS as model}
+						<option value={model}>
+							{model}
 						</option>
 					{/each}
 				</select>
+			</div>
+			<div class="button_item_horizontal {!removeBackgroundEnabled && 'disabled'}">
+				<input
+					type="checkbox"
+					id="enable_background_removal_post_process"
+					name="enable_background_removal_post_process"
+					bind:checked={removeBackgroundPostProcessEnabled}
+				/>
+				<label for="enable_background_removal_post_process"
+					>enable post process mask</label
+				>
 			</div>
 		</div>
 
@@ -169,15 +185,15 @@
 				<label for="enable_filter_white">enable filter white</label>
 			</div>
 			<div class="button_item {!filterWhiteEnabled && 'disabled'}">
-				<label for="mode">mode:</label>
+				<label for="model">model:</label>
 				<select
-					name="mode"
-					bind:value={selectedFilterWhiteMode}
+					name="model"
+					bind:value={selectedFilterWhiteModel}
 					class="button-item"
 				>
-					{#each WHITE_FILTER_MODES as mode}
-						<option value={mode}>
-							{mode}
+					{#each WHITE_FILTER_MODELS as model}
+						<option value={model}>
+							{model}
 						</option>
 					{/each}
 				</select>
