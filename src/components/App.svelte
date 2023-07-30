@@ -1,7 +1,7 @@
 <script lang="ts">
 	let SERVER_URL: string;
 	if (import.meta.env.PROD) {
-		SERVER_URL = "http://digitizer.api.edgeofdusk.com";
+		SERVER_URL = "https://api.edgeofdusk.com/digitizer";
 	} else {
 		SERVER_URL = "http://localhost:8000";
 	}
