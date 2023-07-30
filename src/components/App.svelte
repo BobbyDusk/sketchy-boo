@@ -1,11 +1,15 @@
 <script lang="ts">
-	let SERVER_URL:string;
+	let SERVER_URL: string;
 	if (import.meta.env.PROD) {
 		SERVER_URL = "http://digitizer.api.edgeofdusk.com";
 	} else {
 		SERVER_URL = "http://localhost:8000";
 	}
-	const WHITE_FILTER_MODELS:string[] = ["luminocity", "average", "lightness"];
+	const WHITE_FILTER_MODELS:string[] = [
+		"luminocity",
+		"average",
+		"lightness",
+	];
 	// TODO: the sam model seems awesome, but there is currently a bug. Implement it once fixed
 	// see https://github.com/danielgatis/rembg/issues/459
 	const BACKGROUND_REMOVAL_MODELS:string[] = [
@@ -17,18 +21,25 @@
 		// "sam", TODO: enable once fixed
 	];
 
-	let files:FileList;
-	let removeBackgroundEnabled:boolean = true;
-	let selectedRemoveBackgroundModel:string = "u2net";
-	let removeBackgroundPostProcessEnabled:boolean = true;
-	let filterWhiteEnabled:boolean = true;
-	let selectedFilterWhiteModel:string = "luminocity";
-	let filterWhiteThreshold:number = 90;
-	let originalImageBase64:string;
-	let processedImageSource:string;
-	let proposedFileName:string = "processed.png";
-	let points:number[][] = [];
-	let loading:boolean = false;
+	const PREVIEW_BACKGROUNDS:string[] = [
+		"checkered",
+		"solid"
+	]
+
+	let files: FileList;
+	let removeBackgroundEnabled: boolean = true;
+	let selectedRemoveBackgroundModel: string = "u2net";
+	let removeBackgroundPostProcessEnabled: boolean = true;
+	let filterWhiteEnabled: boolean = true;
+	let selectedFilterWhiteModel: string = "luminocity";
+	let filterWhiteThreshold: number = 90;
+	let originalImageBase64: string;
+	let processedImageSource: string;
+	let proposedFileName: string = "processed.png";
+	let points: number[][] = [];
+	let loading: boolean = false;
+	let previewBackground: string = "checkered";
+	let backgroundColor: string = "#000000";
 
 	function getBase64Image(): Promise<any> {
 		return new Promise((resolve, reject) => {
@@ -51,10 +62,10 @@
 	}
 
 	$: if (files && files[0]) {
-		getBase64Image().then(result => originalImageBase64 = result)
+		getBase64Image().then((result) => (originalImageBase64 = result));
 	}
 
-	function getBaseFilenameWithoutExtension(filename:string): string {
+	function getBaseFilenameWithoutExtension(filename: string): string {
 		// Remove the path (if any) and then remove the extension
 		const baseFilename = filename!
 			.split("/")!
@@ -71,19 +82,18 @@
 			const filterWhite = {
 				enabled: filterWhiteEnabled,
 				model: selectedFilterWhiteModel,
-				threshold: filterWhiteThreshold
-			}
+				threshold: filterWhiteThreshold,
+			};
 			const removeBackground = {
 				enabled: removeBackgroundEnabled,
 				model: selectedRemoveBackgroundModel,
 				postProcess: removeBackgroundPostProcessEnabled,
 				points,
-
-			}
+			};
 			const data = {
 				image: originalImageBase64,
 				filterWhite,
-				removeBackground
+				removeBackground,
 			};
 			const response = await fetch(`${SERVER_URL}/upload`, {
 				method: "POST",
@@ -101,12 +111,12 @@
 		} finally {
 			loading = false;
 		}
-		return
+		return;
 	}
 
-	function getPosition(e:MouseEvent) {
+	function getPosition(e: MouseEvent) {
 		console.log(e.target);
-		let target:HTMLElement = e.target as HTMLElement
+		let target: HTMLElement = e.target as HTMLElement;
 		let rect = target.getBoundingClientRect();
 		let relativePointX = e.clientX - rect.left; //x position within the element.
 		let relativePointY = e.clientY - rect.top; //y position within the element.
@@ -119,7 +129,7 @@
 			(relativePointY / target.clientHeight) * img.height
 		);
 		let point = [pointX, pointY];
-		points.push(point)
+		points.push(point);
 		console.log(point);
 	}
 </script>
@@ -165,7 +175,10 @@
 					{/each}
 				</select>
 			</div>
-			<div class="button_item_horizontal {!removeBackgroundEnabled && 'disabled'}">
+			<div
+				class="button_item_horizontal {!removeBackgroundEnabled &&
+					'disabled'}"
+			>
 				<input
 					type="checkbox"
 					id="enable_background_removal_post_process"
@@ -228,6 +241,36 @@
 				</button>
 			{/if}
 		</div>
+
+		{#if processedImageSource}
+			<div class="button_group">
+				<div
+					class="button_item"
+				>
+					<label for="preview_background">preview background:</label>
+					<select
+						name="preview_background"
+						bind:value={previewBackground}
+						class="button-item"
+					>
+						{#each PREVIEW_BACKGROUNDS as background}
+							<option value={background}>
+								{background}
+							</option>
+						{/each}
+					</select>
+				</div>
+
+				<div
+					class="button_item_horizontal  {previewBackground == "checkered" && 'disabled'}"
+				>
+					<input type="color" bind:value={backgroundColor} name="background_color"/>
+					<label for="background_color">color</label>
+				</div>
+
+			</div>
+		{/if}
+
 		{#if processedImageSource}
 			<div class="button_group">
 				<a
@@ -260,8 +303,9 @@
 			{#if processedImageSource}
 				<img
 					src={processedImageSource}
-					class="image checkered"
+					class="image {previewBackground}"
 					alt="processed img"
+					style={previewBackground == "solid" ? `background-color: ${backgroundColor}` : ""}
 				/>
 			{/if}
 		</div>
@@ -383,7 +427,6 @@
 	.right {
 		grid-column: 2;
 	}
-
 
 	.image_container {
 		display: flex;
