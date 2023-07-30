@@ -1,6 +1,10 @@
 <script lang="ts">
-	const SERVER_URL:string = "http://localhost:8000";
-	//	const SERVER_URL = "http://digitizer.api.edgeofdusk.com";
+	let SERVER_URL:string;
+	if (import.meta.env.PROD) {
+		SERVER_URL = "http://digitizer.api.edgeofdusk.com";
+	} else {
+		SERVER_URL = "http://localhost:8000";
+	}
 	const WHITE_FILTER_MODELS:string[] = ["luminocity", "average", "lightness"];
 	// TODO: the sam model seems awesome, but there is currently a bug. Implement it once fixed
 	// see https://github.com/danielgatis/rembg/issues/459
@@ -330,28 +334,6 @@
 		cursor: pointer;
 	}
 
-	.image_row {
-		width: 100%;
-		display: grid;
-		grid-template-columns: 1fr 1fr;
-		gap: 10px;
-	}
-
-	.left,
-	.right {
-		display: flex;
-		flex-direction: row;
-		gap: 20px;
-	}
-
-	.left {
-		grid-column: 1;
-	}
-
-	.right {
-		grid-column: 2;
-	}
-
 	.process_buttons {
 		display: flex;
 		flex-direction: row;
@@ -380,12 +362,43 @@
 		height: 0;
 	}
 
+	.image_row {
+		width: 100%;
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 20px;
+	}
+
+	.left,
+	.right {
+		display: flex;
+		flex-direction: row;
+		gap: 20px;
+	}
+
+	.left {
+		grid-column: 1;
+	}
+
+	.right {
+		grid-column: 2;
+	}
+
+
 	.image_container {
+		display: flex;
 		justify-self: center;
+		align-self: center;
+		justify-content: center;
+		align-items: center;
+		width: 40vw;
+		height: 60vh;
 	}
 
 	.image {
-		width: 40vw;
+		object-fit: contain;
+		width: 100%;
+		height: 100%;
 	}
 
 	.original_image {
