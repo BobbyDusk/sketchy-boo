@@ -1,18 +1,20 @@
 <script lang="ts">
+	// @ts-ignore
+	import RangeSlider from "svelte-range-slider-pips";
 	let SERVER_URL: string;
 	if (import.meta.env.PROD) {
 		SERVER_URL = "https://api.edgeofdusk.com/digitizer";
 	} else {
 		SERVER_URL = "http://localhost:8000";
 	}
-	const WHITE_FILTER_MODELS:string[] = [
+	const WHITE_FILTER_MODELS: string[] = [
 		"luminocity",
 		"average",
 		"lightness",
 	];
 	// TODO: the sam model seems awesome, but there is currently a bug. Implement it once fixed
 	// see https://github.com/danielgatis/rembg/issues/459
-	const BACKGROUND_REMOVAL_MODELS:string[] = [
+	const BACKGROUND_REMOVAL_MODELS: string[] = [
 		"u2net",
 		"u2netp",
 		"silueta",
@@ -21,10 +23,7 @@
 		// "sam", TODO: enable once fixed
 	];
 
-	const PREVIEW_BACKGROUNDS:string[] = [
-		"checkered",
-		"solid"
-	]
+	const PREVIEW_BACKGROUNDS: string[] = ["checkered", "solid"];
 
 	let files: FileList;
 	let removeBackgroundEnabled: boolean = true;
@@ -32,7 +31,7 @@
 	let removeBackgroundPostProcessEnabled: boolean = true;
 	let filterWhiteEnabled: boolean = true;
 	let selectedFilterWhiteModel: string = "luminocity";
-	let filterWhiteThreshold: number = 90;
+	let filterWhiteRange: number[] = [230, 255];
 	let originalImageBase64: string;
 	let processedImageSource: string;
 	let proposedFileName: string = "processed.png";
@@ -82,7 +81,8 @@
 			const filterWhite = {
 				enabled: filterWhiteEnabled,
 				model: selectedFilterWhiteModel,
-				threshold: filterWhiteThreshold,
+				threshold: filterWhiteRange[0],
+				max: filterWhiteRange[1],
 			};
 			const removeBackground = {
 				enabled: removeBackgroundEnabled,
@@ -216,19 +216,17 @@
 				</select>
 			</div>
 			<div class="button_item {!filterWhiteEnabled && 'disabled'}">
-				<label for="threshold">threshold</label>
-				<div class="threshold_container">
-					<input
-						type="range"
-						bind:value={filterWhiteThreshold}
-						name="threshold"
-						class="threshold"
-						min="0"
-						max="100"
-						step="1"
-					/>
-					<p class="threshold_text">{filterWhiteThreshold}</p>
-				</div>
+				<label for="range_container">range</label>
+				<RangeSlider
+					id="range_container"
+					range
+					pushy
+					bind:values={filterWhiteRange}
+					float
+					min={0}
+					max={255}
+					step={1}
+				/>
 			</div>
 		</div>
 
@@ -244,9 +242,7 @@
 
 		{#if processedImageSource}
 			<div class="button_group">
-				<div
-					class="button_item"
-				>
+				<div class="button_item">
 					<label for="preview_background">preview background:</label>
 					<select
 						name="preview_background"
@@ -262,12 +258,16 @@
 				</div>
 
 				<div
-					class="button_item_horizontal  {previewBackground == "checkered" && 'disabled'}"
+					class="button_item_horizontal {previewBackground ==
+						'checkered' && 'disabled'}"
 				>
-					<input type="color" bind:value={backgroundColor} name="background_color"/>
+					<input
+						type="color"
+						bind:value={backgroundColor}
+						name="background_color"
+					/>
 					<label for="background_color">color</label>
 				</div>
-
 			</div>
 		{/if}
 
@@ -305,7 +305,9 @@
 					src={processedImageSource}
 					class="image {previewBackground}"
 					alt="processed img"
-					style={previewBackground == "solid" ? `background-color: ${backgroundColor}` : ""}
+					style={previewBackground == "solid"
+						? `background-color: ${backgroundColor}`
+						: ""}
 				/>
 			{/if}
 		</div>
@@ -385,19 +387,23 @@
 		gap: 10px;
 	}
 
-	.threshold_container {
-		width: 100%;
-		display: flex;
-		flex-direction: row;
-		align-items: center;
-		gap: 10px;
-	}
-
-	.threshold {
-		-webkit-appearance: none;
-		appearance: none;
+	:global(#range_container) {
 		width: 100%;
 		background-image: linear-gradient(to right, black, white);
+	}
+
+	:global(#range_container .rangeHandle) {
+		height: 13px;
+		width: 13px;
+	}
+
+	:global(#range_container .rangeHandle > .rangeNub) {
+		background-color: blue;
+	}
+
+	:global(#range_container .rangeBar) {
+		background-color: blue;
+		opacity: 0.3;
 	}
 
 	.threshold_text {
