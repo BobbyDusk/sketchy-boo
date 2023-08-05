@@ -23,17 +23,25 @@
 		// "sam", TODO: enable once fixed
 	];
 
+	const CROP_MIN_WIDTH = 40;
+	const CROP_MIN_HEIGHT = 40;
+
 	const PREVIEW_BACKGROUNDS: string[] = ["checkered", "solid"];
 
 	let files: FileList;
-	let isCropEnabled: boolean = false;
+	let isCropEnabled: boolean = true;
+	let isAutoCropEnabled: boolean = true;
+	let cropOpacityThreshold: number[] = [10];
+	let isResizeEnabled: boolean = true;
+	let resizeWidth: number;
+	let resizeHeight: number;
 	let isRemoveBackgroundEnabled: boolean = true;
 	let selectedRemoveBackgroundModel: string = "u2net";
 	let isRemoveBackgroundPostProcessEnabled: boolean = true;
 	let isFilterWhiteEnabled: boolean = true;
 	let selectedFilterWhiteModel: string = "luminocity";
 	let filterWhiteRange: number[] = [230, 255];
-	let originalImageBase64: string;
+	let originalImageBase64: string = "https://images.squarespace-cdn.com/content/v1/5ed4d5702067431c13c60b11/1593707628725-5VXVOK6ZD370T8L759X7/Crazy+Daisy.jpg?format=1000w";
 	let processedImageSource: string;
 	let proposedFileName: string = "processed.png";
 	let points: number[][] = [];
@@ -41,7 +49,19 @@
 	let previewBackground: string = "checkered";
 	let backgroundColor: string = "#000000";
 	let fileName: string;
-	// let cropBox
+	let originalImage: HTMLElement;
+	let originalImageBoundingBox: DOMRect;
+	let cropLeft: number = 0;
+	let cropTop: number = 0;
+	let cropWidth: number = 0;
+	let cropHeight: number = 0;
+	let cropBox: HTMLElement;
+
+	$: if (originalImage) {
+		originalImageBoundingBox = originalImage.getBoundingClientRect();
+		cropWidth = originalImageBoundingBox.width;
+		cropHeight = originalImageBoundingBox.height;
+	}
 
 	function getBase64Image(): Promise<any> {
 		return new Promise((resolve, reject) => {
@@ -81,6 +101,16 @@
 	async function uploadImage(): Promise<undefined> {
 		try {
 			isLoading = true;
+			const crop = {
+				enabled: isCropEnabled,
+				auto: isAutoCropEnabled,
+				threshold: cropOpacityThreshold[0]
+			}
+			const resize = {
+				enabled: isResizeEnabled,
+				width: resizeWidth,
+				height: resizeHeight
+			}
 			const filterWhite = {
 				enabled: isFilterWhiteEnabled,
 				model: selectedFilterWhiteModel,
@@ -95,6 +125,8 @@
 			};
 			const data = {
 				image: originalImageBase64,
+				crop,
+				resize,
 				filterWhite,
 				removeBackground,
 			};
@@ -135,6 +167,25 @@
 		points.push(point);
 		console.log(point);
 	}
+
+// https://stackoverflow.com/questions/64690514/creating-a-resizable-draggable-rotate-view-in-javascript
+	function moveCropBox(e: MouseEvent) {
+		e.preventDefault();
+		cropTop = e.clientY - originalImageBoundingBox.y;
+		cropLeft = e.clientX - originalImageBoundingBox.x;
+		console.log(cropTop, cropLeft)
+	}
+
+	function resizeCropBox(e: DragEvent, top = false, left = false, bottom = false, right = false) {
+		e.preventDefault();
+		cropTop = e.clientY - originalImageBoundingBox.y;
+		cropLeft = e.clientX - originalImageBoundingBox.x;
+		console.log(cropTop, cropLeft)
+	}
+
+	function handleDragBottomRight(e: DragEvent) {
+
+	}
 </script>
 
 <div class="app_root">
@@ -162,10 +213,6 @@
 				/>
 				<label for="enable_crop">enable crop</label>
 			</div>
-			<div class="button_item {!isCropEnabled && 'disabled'}">
-				<p>width: {cropWidth}</p>
-				<p>height: {cropHeight}</p>
-			</div>
 			<div class="button_item_horizontal {!isCropEnabled && 'disabled'}">
 				<input
 					type="checkbox"
@@ -175,12 +222,11 @@
 				/>
 				<label for="enable_crop">enable auto crop</label>
 			</div>
-
-			<div class="button_item {!isCropEnabled && !isAutoCropEnabled && 'disabled'}">
+			<div class="button_item {(!isCropEnabled || !isAutoCropEnabled) && 'disabled'}">
 				<label for="opacity_threshold">opacity threshold</label>
 				<RangeSlider
 					id="range_container"
-					bind:values={opacityThreshold}
+					bind:values={cropOpacityThreshold}
 					float
 					min={0}
 					max={255}
@@ -199,26 +245,22 @@
 				/>
 				<label for="enable_resize">enable resize</label>
 			</div>
-			<div class="button_item {!isFilterWhiteEnabled && 'disabled'}">
-				<label for="image_width">width</label>
+			<div class="button_item {!isResizeEnabled && 'disabled'}">
+				<label for="resize_width">width</label>
 				<input
 					type="number"
-					id="width"
-					name="width"
+					id="resize_width"
+					name="resize_width"
 					bind:value={resizeWidth}
 				/>
 			</div>
-			<div class="button_item {!isFilterWhiteEnabled && 'disabled'}">
-				<label for="range_container">range</label>
-				<RangeSlider
-					id="range_container"
-					range
-					pushy
-					bind:values={filterWhiteRange}
-					float
-					min={0}
-					max={255}
-					step={1}
+			<div class="button_item {!isResizeEnabled && 'disabled'}">
+				<label for="resize_height">height</label>
+				<input
+					type="number"
+					id="resize_height"
+					name="resize_height"
+					bind:value={resizeHeight}
 				/>
 			</div>
 		</div>
@@ -373,18 +415,65 @@
 	</div>
 
 	<div class="image_row">
-		<div class="image_container">
+		<div class="image_container original_image_container">
+
 			{#if originalImageBase64}
 				<img
 					src={originalImageBase64}
 					alt="selected img"
 					class="original_image image"
-					on:mouseup={getPosition}
+					bind:this={originalImage}
 				/>
-				<div class="point" />
+				{#if isCropEnabled && originalImageBoundingBox}
+					<div 
+						class="crop_box" 
+						bind:this={cropBox}
+						style="
+							top: {Math.round(originalImageBoundingBox.top + cropTop)}px;
+							left: {Math.round(originalImageBoundingBox.left + cropLeft)}px;
+							height: {cropHeight}px;
+							width: {cropWidth}px;
+						"
+						role="presentation"
+					>
+						<div 
+							class="corner top left" 
+							role="presentation"
+						/>
+						<div 
+							class="side top left right" 
+							role="presentation"
+						/>
+						<div 
+							class="corner top right" 
+							role="presentation"
+						/>
+						<div 
+							class="side right top bottom" 
+							role="presentation"
+						/>
+						<div 
+							class="corner bottom right" 
+							role="presentation"
+						/>
+						<div 
+							class="side bottom left right" 
+							role="presentation"
+						/>
+						<div 
+							class="corner bottom left" 
+							role="presentation"
+						/>
+						<div 
+							class="side left top bottom" 
+							role="presentation"
+						/>
+					</div>
+				{/if}
 			{:else}
 				<p>No image selected</p>
 			{/if}
+
 		</div>
 		<div class="image_container">
 			{#if processedImageSource}
@@ -531,14 +620,14 @@
 		height: 60vh;
 	}
 
-	.image {
-		object-fit: contain;
-		width: 100%;
-		height: 100%;
+	.original_image_container {
+		position: relative;
 	}
 
-	.original_image {
-		position: relative;
+	.image {
+		max-width: 100%;
+		max-height: 100%;
+		background-color: blue;
 	}
 
 	.checkered {
@@ -639,4 +728,49 @@
 	.disabled {
 		opacity: 0.4;
 	}
+
+	.crop_box {
+		position: fixed;
+		border: 2px solid red;
+		background: none;
+		z-index: 1000;
+		box-sizing: border-box;
+	}
+
+	.crop_box:hover {
+		cursor: move;
+	}
+
+	.dot {
+		width: 10px;
+		height: 10px;
+		border-radius: 5px;
+		position: absolute;
+		box-sizing: border-box;
+		z-index: 1001;
+		background-color: red;
+	}
+
+	.dot:hover {
+		cursor: move;
+	}
+
+	.top {
+		top: 0;
+	}
+
+	.left {
+		left: 0;
+	}
+
+	.right {
+		right: 0;
+	}
+
+	.bottom {
+		bottom: -5px;
+	}
+
+
+
 </style>
