@@ -26,17 +26,18 @@
 	const PREVIEW_BACKGROUNDS: string[] = ["checkered", "solid"];
 
 	let files: FileList;
-	let removeBackgroundEnabled: boolean = true;
+	let isCropEnabled: boolean = false;
+	let isRemoveBackgroundEnabled: boolean = true;
 	let selectedRemoveBackgroundModel: string = "u2net";
-	let removeBackgroundPostProcessEnabled: boolean = true;
-	let filterWhiteEnabled: boolean = true;
+	let isRemoveBackgroundPostProcessEnabled: boolean = true;
+	let isFilterWhiteEnabled: boolean = true;
 	let selectedFilterWhiteModel: string = "luminocity";
 	let filterWhiteRange: number[] = [230, 255];
 	let originalImageBase64: string;
 	let processedImageSource: string;
 	let proposedFileName: string = "processed.png";
 	let points: number[][] = [];
-	let loading: boolean = false;
+	let isLoading: boolean = false;
 	let previewBackground: string = "checkered";
 	let backgroundColor: string = "#000000";
 	let fileName: string;
@@ -79,17 +80,17 @@
 
 	async function uploadImage(): Promise<undefined> {
 		try {
-			loading = true;
+			isLoading = true;
 			const filterWhite = {
-				enabled: filterWhiteEnabled,
+				enabled: isFilterWhiteEnabled,
 				model: selectedFilterWhiteModel,
 				threshold: filterWhiteRange[0],
 				max: filterWhiteRange[1],
 			};
 			const removeBackground = {
-				enabled: removeBackgroundEnabled,
+				enabled: isRemoveBackgroundEnabled,
 				model: selectedRemoveBackgroundModel,
-				postProcess: removeBackgroundPostProcessEnabled,
+				postProcess: isRemoveBackgroundPostProcessEnabled,
 				points,
 			};
 			const data = {
@@ -111,7 +112,7 @@
 		} catch (error) {
 			console.log(`Error: ${error}`);
 		} finally {
-			loading = false;
+			isLoading = false;
 		}
 		return;
 	}
@@ -155,15 +156,88 @@
 			<div class="button_item_horizontal">
 				<input
 					type="checkbox"
+					id="enable_crop"
+					name="enable_crop"
+					bind:checked={isCropEnabled}
+				/>
+				<label for="enable_crop">enable crop</label>
+			</div>
+			<div class="button_item {!isCropEnabled && 'disabled'}">
+				<p>width: {cropWidth}</p>
+				<p>height: {cropHeight}</p>
+			</div>
+			<div class="button_item_horizontal {!isCropEnabled && 'disabled'}">
+				<input
+					type="checkbox"
+					id="enable_auto_crop"
+					name="enable_auto_crop"
+					bind:checked={isAutoCropEnabled}
+				/>
+				<label for="enable_crop">enable auto crop</label>
+			</div>
+
+			<div class="button_item {!isCropEnabled && !isAutoCropEnabled && 'disabled'}">
+				<label for="opacity_threshold">opacity threshold</label>
+				<RangeSlider
+					id="range_container"
+					bind:values={opacityThreshold}
+					float
+					min={0}
+					max={255}
+					step={1}
+				/>
+			</div>
+		</div>
+
+		<div class="button_group">
+			<div class="button_item_horizontal">
+				<input
+					type="checkbox"
+					id="enable_resize"
+					name="enable_resize"
+					bind:checked={isResizeEnabled}
+				/>
+				<label for="enable_resize">enable resize</label>
+			</div>
+			<div class="button_item {!isFilterWhiteEnabled && 'disabled'}">
+				<label for="image_width">width</label>
+				<input
+					type="number"
+					id="width"
+					name="width"
+					bind:value={resizeWidth}
+				/>
+			</div>
+			<div class="button_item {!isFilterWhiteEnabled && 'disabled'}">
+				<label for="range_container">range</label>
+				<RangeSlider
+					id="range_container"
+					range
+					pushy
+					bind:values={filterWhiteRange}
+					float
+					min={0}
+					max={255}
+					step={1}
+				/>
+			</div>
+		</div>
+
+
+
+		<div class="button_group">
+			<div class="button_item_horizontal">
+				<input
+					type="checkbox"
 					id="enable_background_removal"
 					name="enable_background_removal"
-					bind:checked={removeBackgroundEnabled}
+					bind:checked={isRemoveBackgroundEnabled}
 				/>
 				<label for="enable_background_removal"
 					>enable background removal</label
 				>
 			</div>
-			<div class="button_item {!removeBackgroundEnabled && 'disabled'}">
+			<div class="button_item {!isRemoveBackgroundEnabled && 'disabled'}">
 				<label for="model">model:</label>
 				<select
 					name="model"
@@ -178,14 +252,14 @@
 				</select>
 			</div>
 			<div
-				class="button_item_horizontal {!removeBackgroundEnabled &&
+				class="button_item_horizontal {!isRemoveBackgroundEnabled &&
 					'disabled'}"
 			>
 				<input
 					type="checkbox"
 					id="enable_background_removal_post_process"
 					name="enable_background_removal_post_process"
-					bind:checked={removeBackgroundPostProcessEnabled}
+					bind:checked={isRemoveBackgroundPostProcessEnabled}
 				/>
 				<label for="enable_background_removal_post_process"
 					>enable post process mask</label
@@ -199,11 +273,11 @@
 					type="checkbox"
 					id="enable_filter_white"
 					name="enable_filter_white"
-					bind:checked={filterWhiteEnabled}
+					bind:checked={isFilterWhiteEnabled}
 				/>
 				<label for="enable_filter_white">enable filter white</label>
 			</div>
-			<div class="button_item {!filterWhiteEnabled && 'disabled'}">
+			<div class="button_item {!isFilterWhiteEnabled && 'disabled'}">
 				<label for="model">model:</label>
 				<select
 					name="model"
@@ -217,7 +291,7 @@
 					{/each}
 				</select>
 			</div>
-			<div class="button_item {!filterWhiteEnabled && 'disabled'}">
+			<div class="button_item {!isFilterWhiteEnabled && 'disabled'}">
 				<label for="range_container">range</label>
 				<RangeSlider
 					id="range_container"
@@ -233,7 +307,7 @@
 		</div>
 
 		<div class="button_group">
-			{#if loading}
+			{#if isLoading}
 				<div class="loader" />
 			{:else}
 				<button class="button_item button" on:click={uploadImage}>
