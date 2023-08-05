@@ -39,6 +39,8 @@
 	let loading: boolean = false;
 	let previewBackground: string = "checkered";
 	let backgroundColor: string = "#000000";
+	let fileName: string;
+	// let cropBox
 
 	function getBase64Image(): Promise<any> {
 		return new Promise((resolve, reject) => {
@@ -273,10 +275,21 @@
 
 		{#if processedImageSource}
 			<div class="button_group">
+
+			<div class="button_item">
+				<label for="file_name">file name</label>
+				<input
+					type="text"
+					id="file_name"
+					name="file_name"
+					bind:value={fileName}
+				/>
+				</div>
+
 				<a
 					target="_blank"
 					href={processedImageSource}
-					download={proposedFileName}
+					download={fileName || proposedFileName}
 					class="button_item button"
 				>
 					Download
