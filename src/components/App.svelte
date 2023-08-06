@@ -176,7 +176,6 @@
 			isLoading = true;
 			const crop = {
 				enabled: isCropEnabled,
-				// HERE
 				top: transformScreenToimageCoordinates(cropTop),
 				right: transformScreenToimageCoordinates(cropRight),
 				bottom: transformScreenToimageCoordinates(cropBottom),
