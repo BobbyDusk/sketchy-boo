@@ -72,6 +72,17 @@
 	let originalImageHeight: number;
 	let cropRealWidth: number;
 	let cropRealHeight: number;
+	let resizeWidthInput: HTMLInputElement;
+	let resizeHeightInput: HTMLInputElement;
+
+	function updateResizeWidth() {
+		resizeWidth = Math.round(resizeHeight / cropRealHeight * cropRealWidth)
+	}
+
+	function updateResizeHeight() {
+		resizeHeight = Math.round(resizeWidth / cropRealWidth * cropRealHeight)
+	}
+
 
 	$: if (originalImageBase64) {
 		const img = new Image()
@@ -90,8 +101,10 @@
 		cropRealHeight = Math.round(originalImageHeight / originalImageBoundingBox.height * cropHeight)
 	}
 
-	$: if (cropRealHeight) resizeHeight = cropRealHeight
-	$: if (cropRealWidth) resizeWidth = cropRealWidth
+	$: if (cropRealHeight && cropRealWidth) {
+		resizeHeightInput.value = cropRealHeight.toString()
+		resizeWidthInput.value = cropRealWidth.toString()
+	} 
 
 	$: originalImageBoundingBox = originalImage?.getBoundingClientRect();
 
@@ -368,6 +381,8 @@
 					id="resize_width"
 					name="resize_width"
 					bind:value={resizeWidth}
+					on:change={updateResizeHeight}
+					bind:this={resizeWidthInput}
 				/>
 			</div>
 			<div class="button_item {!isResizeEnabled && 'disabled'}">
@@ -377,6 +392,8 @@
 					id="resize_height"
 					name="resize_height"
 					bind:value={resizeHeight}
+					on:change={updateResizeWidth}
+					bind:this={resizeHeightInput}
 				/>
 			</div>
 		</div>
@@ -543,6 +560,7 @@
 						role="presentation"
 						on:mousedown={startMoveCropBox}
 					>
+						<p class="crop_dimensions">{cropRealWidth} × {cropRealHeight}</p>
 						<div
 							class="corner top left"
 							role="presentation"
@@ -950,5 +968,13 @@
 
 	.side.right:hover {
 		cursor: e-resize;
+	}
+
+	.crop_dimensions {
+		font-size: 0.5em;
+		position: absolute;
+		top: -2.5em;
+		right: 0.5em;
+		color: red;
 	}
 </style>
