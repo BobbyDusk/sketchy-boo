@@ -93,12 +93,21 @@
 		img.src = originalImageBase64;
 	}
 
-	$: if (originalImageWidth && originalImageHeight && originalImageBoundingBox) {
-		const cropWidth = originalImageBoundingBox.width - cropLeft - cropRight;
-		cropRealWidth = Math.round(originalImageWidth / originalImageBoundingBox.width * cropWidth)
+	function getCropWidth() {
+		return originalImageBoundingBox.width - cropLeft - cropRight;
+	}
 
-		const cropHeight = originalImageBoundingBox.height - cropTop - cropBottom;
-		cropRealHeight = Math.round(originalImageHeight / originalImageBoundingBox.height * cropHeight)
+	function getCropHeight() {
+		return originalImageBoundingBox.height - cropTop - cropBottom;
+	}
+
+	function transformScreenToimageCoordinates(num: number) {
+		return Math.round(originalImageHeight / originalImageBoundingBox.height * num)
+	}
+
+	$: if (originalImageWidth && originalImageHeight && originalImageBoundingBox) {
+		cropRealWidth = transformScreenToimageCoordinates(getCropWidth())
+		cropRealHeight = transformScreenToimageCoordinates(getCropHeight())
 	}
 
 	$: if (cropRealHeight && cropRealWidth) {
@@ -167,6 +176,11 @@
 			isLoading = true;
 			const crop = {
 				enabled: isCropEnabled,
+				// HERE
+				top: transformScreenToimageCoordinates(cropTop),
+				right: transformScreenToimageCoordinates(cropRight),
+				bottom: transformScreenToimageCoordinates(cropBottom),
+				left: transformScreenToimageCoordinates(cropLeft),
 				auto: isAutoCropEnabled,
 				threshold: cropOpacityThreshold[0],
 			};
