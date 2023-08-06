@@ -7,6 +7,12 @@
 	} else {
 		SERVER_URL = "http://localhost:8000";
 	}
+	enum Dir {
+		top,
+		right,
+		bottom,
+		left,
+	}
 	const WHITE_FILTER_MODELS: string[] = [
 		"luminocity",
 		"average",
@@ -41,7 +47,8 @@
 	let isFilterWhiteEnabled: boolean = true;
 	let selectedFilterWhiteModel: string = "luminocity";
 	let filterWhiteRange: number[] = [230, 255];
-	let originalImageBase64: string = "https://images.squarespace-cdn.com/content/v1/5ed4d5702067431c13c60b11/1593707628725-5VXVOK6ZD370T8L759X7/Crazy+Daisy.jpg?format=1000w";
+	let originalImageBase64: string =
+		"https://images.squarespace-cdn.com/content/v1/5ed4d5702067431c13c60b11/1593707628725-5VXVOK6ZD370T8L759X7/Crazy+Daisy.jpg?format=1000w";
 	let processedImageSource: string;
 	let proposedFileName: string = "processed.png";
 	let points: number[][] = [];
@@ -51,16 +58,37 @@
 	let fileName: string;
 	let originalImage: HTMLElement;
 	let originalImageBoundingBox: DOMRect;
-	let cropLeft: number = 0;
 	let cropTop: number = 0;
-	let cropWidth: number = 0;
-	let cropHeight: number = 0;
+	let cropRight: number = 0;
+	let cropBottom: number = 0;
+	let cropLeft: number = 0;
 	let cropBox: HTMLElement;
+	let croppingDirs: Dir[] = [];
+	let cropMoveRelativeTop: number;
+	let cropMoveRelativeLeft: number;
+	let cropMoveRelativeBottom: number;
+	let cropMoveRelativeRight: number;
+
+
+	$: originalImageBoundingBox = originalImage?.getBoundingClientRect();
 
 	$: if (originalImage) {
-		originalImageBoundingBox = originalImage.getBoundingClientRect();
-		cropWidth = originalImageBoundingBox.width;
-		cropHeight = originalImageBoundingBox.height;
+		// reset cropBox if new image
+		cropTop = 0;
+		cropRight = 0;
+		cropBottom = 0;
+		cropLeft = 0;
+	}
+
+	$: if (originalImage && cropBox) {
+		const top = originalImageBoundingBox.top + cropTop;
+		const left = originalImageBoundingBox.left + cropLeft;
+		const height = originalImageBoundingBox.height - cropTop - cropBottom;
+		const width = originalImageBoundingBox.width - cropLeft - cropRight;
+		cropBox.style.top = `${Math.round(top)}px`;
+		cropBox.style.left = `${Math.round(left)}px`;
+		cropBox.style.height = `${Math.round(height)}px`;
+		cropBox.style.width = `${Math.round(width)}px`;
 	}
 
 	function getBase64Image(): Promise<any> {
@@ -104,13 +132,13 @@
 			const crop = {
 				enabled: isCropEnabled,
 				auto: isAutoCropEnabled,
-				threshold: cropOpacityThreshold[0]
-			}
+				threshold: cropOpacityThreshold[0],
+			};
 			const resize = {
 				enabled: isResizeEnabled,
 				width: resizeWidth,
-				height: resizeHeight
-			}
+				height: resizeHeight,
+			};
 			const filterWhite = {
 				enabled: isFilterWhiteEnabled,
 				model: selectedFilterWhiteModel,
@@ -168,23 +196,85 @@
 		console.log(point);
 	}
 
-// https://stackoverflow.com/questions/64690514/creating-a-resizable-draggable-rotate-view-in-javascript
+	// https://stackoverflow.com/questions/64690514/creating-a-resizable-draggable-rotate-view-in-javascript
 	function moveCropBox(e: MouseEvent) {
 		e.preventDefault();
-		cropTop = e.clientY - originalImageBoundingBox.y;
-		cropLeft = e.clientX - originalImageBoundingBox.x;
-		console.log(cropTop, cropLeft)
+		if (e.y - cropMoveRelativeTop < originalImageBoundingBox.top) {
+			if (e.y < originalImageBoundingBox.top) {
+				cropMoveRelativeTop = 0;
+				cropMoveRelativeBottom = cropBox.getBoundingClientRect().height
+			}
+		} else if (e.y + cropMoveRelativeBottom > originalImageBoundingBox.bottom) {
+			if (e.y > originalImageBoundingBox.bottom) {
+				cropMoveRelativeTop = cropBox.getBoundingClientRect().height;
+				cropMoveRelativeBottom = 0;
+			}
+		} else {
+			cropTop = Math.max(0, e.y - originalImageBoundingBox.top - cropMoveRelativeTop);
+			cropBottom = Math.max(0, originalImageBoundingBox.bottom - e.y - cropMoveRelativeBottom);
+		}
+
+		if (e.x - cropMoveRelativeLeft < originalImageBoundingBox.left) {
+			if (e.x < originalImageBoundingBox.left) {
+				cropMoveRelativeLeft = 0;
+				cropMoveRelativeRight = cropBox.getBoundingClientRect().width
+			}
+		} else if (e.x + cropMoveRelativeRight > originalImageBoundingBox.right) {
+			if (e.x > originalImageBoundingBox.right) {
+				cropMoveRelativeLeft = cropBox.getBoundingClientRect().width;
+				cropMoveRelativeRight = 0;
+			}
+		} else {
+			cropLeft = Math.max(0, e.x - originalImageBoundingBox.left - cropMoveRelativeLeft);
+			cropRight = Math.max(0, originalImageBoundingBox.right - e.x - cropMoveRelativeRight);
+		}
 	}
 
-	function resizeCropBox(e: DragEvent, top = false, left = false, bottom = false, right = false) {
+	function stopMoveCropBox() {
+		window.removeEventListener("mousemove", moveCropBox, false);
+		window.removeEventListener("mouseup", stopMoveCropBox, false);
+	}
+
+	function startMoveCropBox(e: MouseEvent) {
 		e.preventDefault();
-		cropTop = e.clientY - originalImageBoundingBox.y;
-		cropLeft = e.clientX - originalImageBoundingBox.x;
-		console.log(cropTop, cropLeft)
+		e.stopPropagation();
+		cropMoveRelativeTop = e.y - cropBox.getBoundingClientRect().top
+		cropMoveRelativeLeft = e.x - cropBox.getBoundingClientRect().left
+		cropMoveRelativeBottom = cropBox.getBoundingClientRect().bottom - e.y
+		cropMoveRelativeRight = cropBox.getBoundingClientRect().right - e.x
+		window.addEventListener("mousemove", moveCropBox, false);
+		window.addEventListener("mouseup", stopMoveCropBox, false);
 	}
 
-	function handleDragBottomRight(e: DragEvent) {
 
+	function resizeCropBox(e: MouseEvent) {
+		e.preventDefault();
+		if (croppingDirs.includes(Dir.top)) {
+			cropTop = Math.max(0, e.y - originalImageBoundingBox.top);
+		}
+		if (croppingDirs.includes(Dir.right)) {
+			cropRight = Math.max(0, originalImageBoundingBox.right - e.x);
+		}
+		if (croppingDirs.includes(Dir.bottom)) {
+			cropBottom = Math.max(0, originalImageBoundingBox.bottom - e.y);
+		}
+		if (croppingDirs.includes(Dir.left)) {
+			cropLeft = Math.max(0, e.x - originalImageBoundingBox.left);
+		}
+	}
+
+	function stopResizeCropBox() {
+		window.removeEventListener("mousemove", resizeCropBox, false);
+		window.removeEventListener("mouseup", stopResizeCropBox, false);
+		croppingDirs = [];
+	}
+
+	function startResizeCropBox(e: MouseEvent, dirs: Dir[]) {
+		e.preventDefault();
+		e.stopPropagation();
+		croppingDirs = dirs;
+		window.addEventListener("mousemove", resizeCropBox, false);
+		window.addEventListener("mouseup", stopResizeCropBox, false);
 	}
 </script>
 
@@ -222,7 +312,10 @@
 				/>
 				<label for="enable_crop">enable auto crop</label>
 			</div>
-			<div class="button_item {(!isCropEnabled || !isAutoCropEnabled) && 'disabled'}">
+			<div
+				class="button_item {(!isCropEnabled || !isAutoCropEnabled) &&
+					'disabled'}"
+			>
 				<label for="opacity_threshold">opacity threshold</label>
 				<RangeSlider
 					id="range_container"
@@ -264,8 +357,6 @@
 				/>
 			</div>
 		</div>
-
-
 
 		<div class="button_group">
 			<div class="button_item_horizontal">
@@ -391,15 +482,14 @@
 
 		{#if processedImageSource}
 			<div class="button_group">
-
-			<div class="button_item">
-				<label for="file_name">file name</label>
-				<input
-					type="text"
-					id="file_name"
-					name="file_name"
-					bind:value={fileName}
-				/>
+				<div class="button_item">
+					<label for="file_name">file name</label>
+					<input
+						type="text"
+						id="file_name"
+						name="file_name"
+						bind:value={fileName}
+					/>
 				</div>
 
 				<a
@@ -416,7 +506,6 @@
 
 	<div class="image_row">
 		<div class="image_container original_image_container">
-
 			{#if originalImageBase64}
 				<img
 					src={originalImageBase64}
@@ -425,55 +514,54 @@
 					bind:this={originalImage}
 				/>
 				{#if isCropEnabled && originalImageBoundingBox}
-					<div 
-						class="crop_box" 
+					<div
+						class="crop_box"
 						bind:this={cropBox}
-						style="
-							top: {Math.round(originalImageBoundingBox.top + cropTop)}px;
-							left: {Math.round(originalImageBoundingBox.left + cropLeft)}px;
-							height: {cropHeight}px;
-							width: {cropWidth}px;
-						"
 						role="presentation"
+						on:mousedown={startMoveCropBox}
 					>
-						<div 
-							class="corner top left" 
+						<div
+							class="corner top left"
 							role="presentation"
+							on:mousedown={(e) =>
+								startResizeCropBox(e, [Dir.top, Dir.left])}
 						/>
-						<div 
-							class="side top left right" 
+						<div
+							class="side top"
 							role="presentation"
+							on:mousedown={(e) =>
+								startResizeCropBox(e, [Dir.top])}
 						/>
-						<div 
-							class="corner top right" 
-							role="presentation"
+						<div class="corner top right" role="presentation" 
+							on:mousedown={(e) =>
+								startResizeCropBox(e, [Dir.top, Dir.right])}
 						/>
-						<div 
-							class="side right top bottom" 
-							role="presentation"
+						<div class="side right" role="presentation" 
+							on:mousedown={(e) =>
+								startResizeCropBox(e, [Dir.right])}
 						/>
-						<div 
-							class="corner bottom right" 
-							role="presentation"
+						<div class="corner bottom right" role="presentation" 
+							on:mousedown={(e) =>
+								startResizeCropBox(e, [Dir.bottom, Dir.right])}
 						/>
-						<div 
-							class="side bottom left right" 
-							role="presentation"
+						<div class="side bottom" role="presentation" 
+							on:mousedown={(e) =>
+								startResizeCropBox(e, [Dir.bottom])}
 						/>
-						<div 
-							class="corner bottom left" 
-							role="presentation"
+						<div class="corner bottom left" role="presentation" 
+							on:mousedown={(e) =>
+								startResizeCropBox(e, [Dir.bottom, Dir.left])}
 						/>
-						<div 
-							class="side left top bottom" 
-							role="presentation"
+						<div class="side left" role="presentation" 
+							on:mousedown={(e) =>
+								startResizeCropBox(e, [Dir.left])}
+
 						/>
 					</div>
 				{/if}
 			{:else}
 				<p>No image selected</p>
 			{/if}
-
 		</div>
 		<div class="image_container">
 			{#if processedImageSource}
@@ -741,36 +829,103 @@
 		cursor: move;
 	}
 
-	.dot {
-		width: 10px;
-		height: 10px;
-		border-radius: 5px;
+	.corner,
+	.side {
 		position: absolute;
 		box-sizing: border-box;
-		z-index: 1001;
 		background-color: red;
 	}
 
-	.dot:hover {
-		cursor: move;
+	.corner {
+		--cornerDiameter: 12px;
+
+		width: var(--cornerDiameter);
+		height: var(--cornerDiameter);
+		border-radius: calc(var(--cornerDiameter) / 2);
+		z-index: 1002;
 	}
 
-	.top {
-		top: 0;
+	.side {
+		--borderWidth: 4px;
+
+		z-index: 1001;
 	}
 
-	.left {
+	.corner.top {
+		top: calc(-1 * var(--cornerDiameter) / 2);
+	}
+
+	.corner.bottom {
+		bottom: calc(-1 * var(--cornerDiameter) / 2);
+	}
+
+	.corner.left {
+		left: calc(-1 * var(--cornerDiameter) / 2);
+	}
+
+	.corner.right {
+		right: calc(-1 * var(--cornerDiameter) / 2);
+	}
+
+	.corner.top.left:hover {
+		cursor: nw-resize;
+	}
+
+	.corner.top.right {
+		cursor: ne-resize;
+	}
+
+	.corner.bottom.right {
+		cursor: se-resize;
+	}
+
+	.corner.bottom.left {
+		cursor: sw-resize;
+	}
+
+	.side.top,
+	.side.bottom {
 		left: 0;
-	}
-
-	.right {
 		right: 0;
+		height: var(--borderWidth);
 	}
 
-	.bottom {
-		bottom: -5px;
+	.side.right,
+	.side.left {
+		top: 0;
+		bottom: 0;
+		width: var(--borderWidth);
 	}
 
+	.side.top {
+		top: calc(-1 * var(--borderWidth) / 2);
+	}
 
+	.side.top:hover {
+		cursor: n-resize;
+	}
 
+	.side.left {
+		left: calc(-1 * var(--borderWidth) / 2);
+	}
+
+	.side.left:hover {
+		cursor: w-resize;
+	}
+
+	.side.bottom {
+		bottom: calc(-1 * var(--borderWidth) / 2);
+	}
+
+	.side.bottom:hover {
+		cursor: s-resize;
+	}
+
+	.side.right {
+		right: calc(-1 * var(--borderWidth) / 2);
+	}
+
+	.side.right:hover {
+		cursor: e-resize;
+	}
 </style>
