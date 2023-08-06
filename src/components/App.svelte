@@ -68,7 +68,30 @@
 	let cropMoveRelativeLeft: number;
 	let cropMoveRelativeBottom: number;
 	let cropMoveRelativeRight: number;
+	let originalImageWidth: number;
+	let originalImageHeight: number;
+	let cropRealWidth: number;
+	let cropRealHeight: number;
 
+	$: if (originalImageBase64) {
+		const img = new Image()
+		img.onload = function(){
+  			originalImageHeight = img.height;
+  			originalImageWidth = img.width;
+		}
+		img.src = originalImageBase64;
+	}
+
+	$: if (originalImageWidth && originalImageHeight && originalImageBoundingBox) {
+		const cropWidth = originalImageBoundingBox.width - cropLeft - cropRight;
+		cropRealWidth = Math.round(originalImageWidth / originalImageBoundingBox.width * cropWidth)
+
+		const cropHeight = originalImageBoundingBox.height - cropTop - cropBottom;
+		cropRealHeight = Math.round(originalImageHeight / originalImageBoundingBox.height * cropHeight)
+	}
+
+	$: if (cropRealHeight) resizeHeight = cropRealHeight
+	$: if (cropRealWidth) resizeWidth = cropRealWidth
 
 	$: originalImageBoundingBox = originalImage?.getBoundingClientRect();
 
