@@ -1,4 +1,8 @@
 <script lang="ts">
+	// TODO: remove write in outline of image, maybe using rembg alpha metting?
+	// TODO: crop rotate
+	// TODO: add hover tooltips using <div title="...">
+
 	// @ts-ignore
 	import RangeSlider from "svelte-range-slider-pips";
 	let SERVER_URL: string;
@@ -35,20 +39,20 @@
 	const PREVIEW_BACKGROUNDS: string[] = ["checkered", "solid"];
 
 	let files: FileList;
-	let isCropEnabled: boolean = true;
+	let isCropEnabled: boolean = false;
 	let isAutoCropEnabled: boolean = true;
 	let cropOpacityThreshold: number[] = [10];
-	let isResizeEnabled: boolean = true;
+	let isResizeEnabled: boolean = false;
+	// TODO: max 2000 size
 	let resizeWidth: number;
 	let resizeHeight: number;
-	let isRemoveBackgroundEnabled: boolean = true;
+	let isRemoveBackgroundEnabled: boolean = false;
 	let selectedRemoveBackgroundModel: string = "u2net";
 	let isRemoveBackgroundPostProcessEnabled: boolean = true;
-	let isFilterWhiteEnabled: boolean = true;
+	let isFilterWhiteEnabled: boolean = false;
 	let selectedFilterWhiteModel: string = "luminocity";
 	let filterWhiteRange: number[] = [230, 255];
-	let originalImageBase64: string =
-		"https://images.squarespace-cdn.com/content/v1/5ed4d5702067431c13c60b11/1593707628725-5VXVOK6ZD370T8L759X7/Crazy+Daisy.jpg?format=1000w";
+	let originalImageBase64: string;
 	let processedImageSource: string;
 	let proposedFileName: string = "processed.png";
 	let points: number[][] = [];
@@ -59,9 +63,10 @@
 	let originalImage: HTMLElement;
 	let originalImageBoundingBox: DOMRect;
 	let cropTop: number = 0;
+	let cropLeft: number = 0;
+	// TODO: change everything in terms of width and height instead of right and bottom
 	let cropRight: number = 0;
 	let cropBottom: number = 0;
-	let cropLeft: number = 0;
 	let cropBox: HTMLElement;
 	let croppingDirs: Dir[] = [];
 	let cropMoveRelativeTop: number;
@@ -93,21 +98,13 @@
 		img.src = originalImageBase64;
 	}
 
-	function getCropWidth() {
-		return originalImageBoundingBox.width - cropLeft - cropRight;
-	}
-
-	function getCropHeight() {
-		return originalImageBoundingBox.height - cropTop - cropBottom;
-	}
-
 	function transformScreenToimageCoordinates(num: number) {
 		return Math.round(originalImageHeight / originalImageBoundingBox.height * num)
 	}
 
 	$: if (originalImageWidth && originalImageHeight && originalImageBoundingBox) {
-		cropRealWidth = transformScreenToimageCoordinates(getCropWidth())
-		cropRealHeight = transformScreenToimageCoordinates(getCropHeight())
+		cropRealWidth = transformScreenToimageCoordinates(originalImageBoundingBox.width - cropLeft - cropRight)
+		cropRealHeight = transformScreenToimageCoordinates(originalImageBoundingBox.height - cropTop - cropBottom)
 	}
 
 	$: if (cropRealHeight && cropRealWidth) {
@@ -177,10 +174,10 @@
 			const crop = {
 				enabled: isCropEnabled,
 				top: transformScreenToimageCoordinates(cropTop),
-				right: transformScreenToimageCoordinates(cropRight),
-				bottom: transformScreenToimageCoordinates(cropBottom),
 				left: transformScreenToimageCoordinates(cropLeft),
-				auto: isAutoCropEnabled,
+				width: cropRealWidth,
+				height: cropRealHeight,
+				autoEnabled: isAutoCropEnabled,
 				threshold: cropOpacityThreshold[0],
 			};
 			const resize = {
@@ -300,15 +297,19 @@
 		e.preventDefault();
 		if (croppingDirs.includes(Dir.top)) {
 			cropTop = Math.max(0, e.y - originalImageBoundingBox.top);
+			cropTop = Math.min(cropTop, originalImageBoundingBox.height - cropBottom - CROP_MIN_HEIGHT)
 		}
 		if (croppingDirs.includes(Dir.right)) {
 			cropRight = Math.max(0, originalImageBoundingBox.right - e.x);
+			cropRight = Math.min(cropRight, originalImageBoundingBox.width - cropLeft - CROP_MIN_WIDTH)
 		}
 		if (croppingDirs.includes(Dir.bottom)) {
 			cropBottom = Math.max(0, originalImageBoundingBox.bottom - e.y);
+			cropBottom = Math.min(cropBottom, originalImageBoundingBox.height - cropTop - CROP_MIN_HEIGHT)
 		}
 		if (croppingDirs.includes(Dir.left)) {
 			cropLeft = Math.max(0, e.x - originalImageBoundingBox.left);
+			cropLeft = Math.min(cropLeft, originalImageBoundingBox.width - cropRight - CROP_MIN_WIDTH)
 		}
 	}
 
@@ -359,7 +360,7 @@
 					name="enable_auto_crop"
 					bind:checked={isAutoCropEnabled}
 				/>
-				<label for="enable_crop">enable auto crop</label>
+				<label for="enable_auto_crop">enable auto crop</label>
 			</div>
 			<div
 				class="button_item {(!isCropEnabled || !isAutoCropEnabled) &&
@@ -373,40 +374,6 @@
 					min={0}
 					max={255}
 					step={1}
-				/>
-			</div>
-		</div>
-
-		<div class="button_group">
-			<div class="button_item_horizontal">
-				<input
-					type="checkbox"
-					id="enable_resize"
-					name="enable_resize"
-					bind:checked={isResizeEnabled}
-				/>
-				<label for="enable_resize">enable resize</label>
-			</div>
-			<div class="button_item {!isResizeEnabled && 'disabled'}">
-				<label for="resize_width">width</label>
-				<input
-					type="number"
-					id="resize_width"
-					name="resize_width"
-					bind:value={resizeWidth}
-					on:change={updateResizeHeight}
-					bind:this={resizeWidthInput}
-				/>
-			</div>
-			<div class="button_item {!isResizeEnabled && 'disabled'}">
-				<label for="resize_height">height</label>
-				<input
-					type="number"
-					id="resize_height"
-					name="resize_height"
-					bind:value={resizeHeight}
-					on:change={updateResizeWidth}
-					bind:this={resizeHeightInput}
 				/>
 			</div>
 		</div>
@@ -488,6 +455,40 @@
 					min={0}
 					max={255}
 					step={1}
+				/>
+			</div>
+		</div>
+
+		<div class="button_group">
+			<div class="button_item_horizontal">
+				<input
+					type="checkbox"
+					id="enable_resize"
+					name="enable_resize"
+					bind:checked={isResizeEnabled}
+				/>
+				<label for="enable_resize">enable resize</label>
+			</div>
+			<div class="button_item {!isResizeEnabled && 'disabled'}">
+				<label for="resize_width">width</label>
+				<input
+					type="number"
+					id="resize_width"
+					name="resize_width"
+					bind:value={resizeWidth}
+					on:change={updateResizeHeight}
+					bind:this={resizeWidthInput}
+				/>
+			</div>
+			<div class="button_item {!isResizeEnabled && 'disabled'}">
+				<label for="resize_height">height</label>
+				<input
+					type="number"
+					id="resize_height"
+					name="resize_height"
+					bind:value={resizeHeight}
+					on:change={updateResizeWidth}
+					bind:this={resizeHeightInput}
 				/>
 			</div>
 		</div>
