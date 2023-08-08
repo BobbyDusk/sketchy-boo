@@ -53,7 +53,7 @@
 	let isFilterWhiteEnabled: boolean = false;
 	let selectedFilterWhiteModel: string = "luminocity";
 	let filterWhiteRange: number[] = [230, 255];
-	let originalImageBase64: string | null;
+	let originalImageBase64: string | null = null;
 	let processedImageSource: string;
 	let proposedFileName: string = "processed.png";
 	let points: number[][] = [];
@@ -174,8 +174,8 @@
 					originalImageWidth = img.width;
 				};
 
-				originalImage.src = originalImageBase64;
-				img.src = originalImageBase64;
+				originalImage.src = originalImageBase64!;
+				img.src = originalImageBase64!;
 			});
 		}
 	}
@@ -259,7 +259,7 @@
 		let relativePointX = e.clientX - rect.left; //x position within the element.
 		let relativePointY = e.clientY - rect.top; //y position within the element.
 		let img = new Image();
-		img.src = originalImageBase64;
+		img.src = originalImageBase64!;
 		let pointX = Math.round(
 			(relativePointX / target.clientWidth) * img.width
 		);
@@ -618,17 +618,11 @@
 
 	<div class="image_row">
 		<div class="image_container original_image_container">
-			<img
-				alt="selected img"
-				class="original_image image"
-				bind:this={originalImage}
-				style="visibility: {originalImageBase64 && !isImageLoading
-					? 'visible'
-					: 'hidden'};"
-			/>
 			<div
 				class="loader"
-				style="visibility: {isImageLoading ? 'visible' : 'hidden'};"
+				style="visibility: {isImageLoading 
+					? 'visible'
+					: 'hidden'};"
 			/>
 			<p
 				style="visibility: {!isImageLoading && !originalImageBase64
@@ -637,13 +631,21 @@
 			>
 				No image selected
 			</p>
+			<img
+				alt="selected img"
+				class="original_image image"
+				bind:this={originalImage}
+				style="visibility: {!isImageLoading && originalImageBase64
+					? 'visible'
+					: 'hidden'};"
+			/>
 			<div
 				class="crop_box"
 				bind:this={cropBox}
 				role="presentation"
 				on:mousedown={startMoveCropBox}
-				style="visibility: {originalImageBase64 &&
-				!isImageLoading &&
+				style="visibility: {!isImageLoading &&
+				originalImageBase64 &&
 				isCropEnabled
 					? 'visible'
 					: 'hidden'};"
@@ -833,13 +835,16 @@
 	}
 
 	.image_container {
+		/*
+		display: grid;
+		place-items: center;
+		*/
 		display: flex;
-		justify-self: center;
-		align-self: center;
 		justify-content: center;
 		align-items: center;
 		width: 40vw;
 		height: 60vh;
+		background-color: blue;
 	}
 
 	.original_image_container {
