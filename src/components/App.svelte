@@ -619,12 +619,13 @@
 	<div class="image_row">
 		<div class="image_container original_image_container">
 			<div
-				class="loader"
+				class="loader original_image_content"
 				style="visibility: {isImageLoading 
 					? 'visible'
 					: 'hidden'};"
 			/>
 			<p
+				class = "original_image_content"
 				style="visibility: {!isImageLoading && !originalImageBase64
 					? 'visible'
 					: 'hidden'};"
@@ -633,14 +634,14 @@
 			</p>
 			<img
 				alt="selected img"
-				class="original_image image"
+				class="original_image image original_image_content"
 				bind:this={originalImage}
 				style="visibility: {!isImageLoading && originalImageBase64
 					? 'visible'
 					: 'hidden'};"
 			/>
 			<div
-				class="crop_box"
+				class="crop_box original_image_content"
 				bind:this={cropBox}
 				role="presentation"
 				on:mousedown={startMoveCropBox}
@@ -835,26 +836,33 @@
 	}
 
 	.image_container {
-		/*
 		display: grid;
-		place-items: center;
-		*/
+		grid-template-columns: 100%;
+		grid-template-rows: 100%;
+		align-items: center;
+		justify-items: center;
+		/*
 		display: flex;
 		justify-content: center;
 		align-items: center;
+		*/
 		width: 40vw;
 		height: 60vh;
-		background-color: blue;
 	}
 
 	.original_image_container {
 		position: relative;
 	}
 
+	.original_image_content {
+		grid-row: 1;
+		grid-column: 1;
+	}
+
 	.image {
 		max-width: 100%;
 		max-height: 100%;
-		background-color: blue;
+		background-color: red;
 	}
 
 	.checkered {
