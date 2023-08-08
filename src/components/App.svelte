@@ -2,6 +2,8 @@
 	// TODO: remove write in outline of image, maybe using rembg alpha metting?
 	// TODO: crop rotate
 	// TODO: add hover tooltips using <div title="...">
+	// TODO: auto crop, automatically detect if background is removed through whiteFilter or removeBackground
+	// if so, crop based on transparency, if not, crop based on white
 
 	// @ts-ignore
 	import RangeSlider from "svelte-range-slider-pips";
@@ -38,7 +40,6 @@
 
 	const PREVIEW_BACKGROUNDS: string[] = ["checkered", "solid"];
 
-	let files: FileList;
 	let isCropEnabled: boolean = false;
 	let isAutoCropEnabled: boolean = true;
 	let cropOpacityThreshold: number[] = [10];
@@ -52,7 +53,7 @@
 	let isFilterWhiteEnabled: boolean = false;
 	let selectedFilterWhiteModel: string = "luminocity";
 	let filterWhiteRange: number[] = [230, 255];
-	let originalImageBase64: string;
+	let originalImageBase64: string | null;
 	let processedImageSource: string;
 	let proposedFileName: string = "processed.png";
 	let points: number[][] = [];
@@ -60,7 +61,7 @@
 	let previewBackground: string = "checkered";
 	let backgroundColor: string = "#000000";
 	let fileName: string;
-	let originalImage: HTMLElement;
+	let originalImage: HTMLImageElement;
 	let originalImageBoundingBox: DOMRect;
 	let cropTop: number = 0;
 	let cropLeft: number = 0;
@@ -79,42 +80,21 @@
 	let cropRealHeight: number;
 	let resizeWidthInput: HTMLInputElement;
 	let resizeHeightInput: HTMLInputElement;
+	let isImageLoading: boolean = false;
 
 	function updateResizeWidth() {
-		resizeWidth = Math.round(resizeHeight / cropRealHeight * cropRealWidth)
+		resizeWidth = Math.round(
+			(resizeHeight / cropRealHeight) * cropRealWidth
+		);
 	}
 
 	function updateResizeHeight() {
-		resizeHeight = Math.round(resizeWidth / cropRealWidth * cropRealHeight)
+		resizeHeight = Math.round(
+			(resizeWidth / cropRealWidth) * cropRealHeight
+		);
 	}
 
-
-	$: if (originalImageBase64) {
-		const img = new Image()
-		img.onload = function(){
-  			originalImageHeight = img.height;
-  			originalImageWidth = img.width;
-		}
-		img.src = originalImageBase64;
-	}
-
-	function transformScreenToimageCoordinates(num: number) {
-		return Math.round(originalImageHeight / originalImageBoundingBox.height * num)
-	}
-
-	$: if (originalImageWidth && originalImageHeight && originalImageBoundingBox) {
-		cropRealWidth = transformScreenToimageCoordinates(originalImageBoundingBox.width - cropLeft - cropRight)
-		cropRealHeight = transformScreenToimageCoordinates(originalImageBoundingBox.height - cropTop - cropBottom)
-	}
-
-	$: if (cropRealHeight && cropRealWidth) {
-		resizeHeightInput.value = cropRealHeight.toString()
-		resizeWidthInput.value = cropRealWidth.toString()
-	} 
-
-	$: originalImageBoundingBox = originalImage?.getBoundingClientRect();
-
-	$: if (originalImage) {
+	function resetCropBox() {
 		// reset cropBox if new image
 		cropTop = 0;
 		cropRight = 0;
@@ -122,21 +102,46 @@
 		cropLeft = 0;
 	}
 
-	$: if (originalImage && cropBox) {
+	function transformScreenToimageCoordinates(num: number) {
+		return Math.round(
+			(originalImageHeight / originalImageBoundingBox.height) * num
+		);
+	}
+
+	$: if (
+		originalImageWidth &&
+		originalImageHeight &&
+		originalImageBoundingBox
+	) {
+		cropRealWidth = transformScreenToimageCoordinates(
+			originalImageBoundingBox.width - cropLeft - cropRight
+		);
+		cropRealHeight = transformScreenToimageCoordinates(
+			originalImageBoundingBox.height - cropTop - cropBottom
+		);
+	}
+
+	$: if (cropRealHeight && cropRealWidth) {
+		resizeHeightInput.value = cropRealHeight.toString();
+		resizeWidthInput.value = cropRealWidth.toString();
+	}
+
+	$: if (originalImageBoundingBox && cropBox) {
 		const top = originalImageBoundingBox.top + cropTop;
 		const left = originalImageBoundingBox.left + cropLeft;
 		const height = originalImageBoundingBox.height - cropTop - cropBottom;
 		const width = originalImageBoundingBox.width - cropLeft - cropRight;
+
 		cropBox.style.top = `${Math.round(top)}px`;
 		cropBox.style.left = `${Math.round(left)}px`;
 		cropBox.style.height = `${Math.round(height)}px`;
 		cropBox.style.width = `${Math.round(width)}px`;
 	}
 
-	function getBase64Image(): Promise<any> {
+	function getBase64Image(file: File): Promise<any> {
 		return new Promise((resolve, reject) => {
 			let reader = new FileReader();
-			reader.readAsDataURL(files[0]);
+			reader.readAsDataURL(file);
 			reader.onload = () => {
 				resolve(reader.result);
 			};
@@ -147,14 +152,38 @@
 		});
 	}
 
-	$: if (files && files[0]) {
-		proposedFileName = `${getBaseFilenameWithoutExtension(
-			files[0].name
-		)}_processed.png`;
+	function updateOriginalImage(e: any) {
+		const fileInput = e.target as HTMLInputElement;
+		const fileList: FileList | null = fileInput.files;
+		if (fileList && fileList[0]) {
+			isImageLoading = true;
+			originalImageBase64 = null;
+			getBase64Image(fileList[0]).then((result) => {
+				originalImageBase64 = result;
+				resetCropBox();
+				originalImage.onload = () => {
+					originalImageBoundingBox =
+						originalImage?.getBoundingClientRect();
+					setProposedFileName(fileList[0]);
+					isImageLoading = false;
+				};
+
+				const img = new Image();
+				img.onload = () => {
+					originalImageHeight = img.height;
+					originalImageWidth = img.width;
+				};
+
+				originalImage.src = originalImageBase64;
+				img.src = originalImageBase64;
+			});
+		}
 	}
 
-	$: if (files && files[0]) {
-		getBase64Image().then((result) => (originalImageBase64 = result));
+	function setProposedFileName(file: File) {
+		proposedFileName = `${getBaseFilenameWithoutExtension(
+			file.name
+		)}_processed.png`;
 	}
 
 	function getBaseFilenameWithoutExtension(filename: string): string {
@@ -248,31 +277,49 @@
 		if (e.y - cropMoveRelativeTop < originalImageBoundingBox.top) {
 			if (e.y < originalImageBoundingBox.top) {
 				cropMoveRelativeTop = 0;
-				cropMoveRelativeBottom = cropBox.getBoundingClientRect().height
+				cropMoveRelativeBottom = cropBox.getBoundingClientRect().height;
 			}
-		} else if (e.y + cropMoveRelativeBottom > originalImageBoundingBox.bottom) {
+		} else if (
+			e.y + cropMoveRelativeBottom >
+			originalImageBoundingBox.bottom
+		) {
 			if (e.y > originalImageBoundingBox.bottom) {
 				cropMoveRelativeTop = cropBox.getBoundingClientRect().height;
 				cropMoveRelativeBottom = 0;
 			}
 		} else {
-			cropTop = Math.max(0, e.y - originalImageBoundingBox.top - cropMoveRelativeTop);
-			cropBottom = Math.max(0, originalImageBoundingBox.bottom - e.y - cropMoveRelativeBottom);
+			cropTop = Math.max(
+				0,
+				e.y - originalImageBoundingBox.top - cropMoveRelativeTop
+			);
+			cropBottom = Math.max(
+				0,
+				originalImageBoundingBox.bottom - e.y - cropMoveRelativeBottom
+			);
 		}
 
 		if (e.x - cropMoveRelativeLeft < originalImageBoundingBox.left) {
 			if (e.x < originalImageBoundingBox.left) {
 				cropMoveRelativeLeft = 0;
-				cropMoveRelativeRight = cropBox.getBoundingClientRect().width
+				cropMoveRelativeRight = cropBox.getBoundingClientRect().width;
 			}
-		} else if (e.x + cropMoveRelativeRight > originalImageBoundingBox.right) {
+		} else if (
+			e.x + cropMoveRelativeRight >
+			originalImageBoundingBox.right
+		) {
 			if (e.x > originalImageBoundingBox.right) {
 				cropMoveRelativeLeft = cropBox.getBoundingClientRect().width;
 				cropMoveRelativeRight = 0;
 			}
 		} else {
-			cropLeft = Math.max(0, e.x - originalImageBoundingBox.left - cropMoveRelativeLeft);
-			cropRight = Math.max(0, originalImageBoundingBox.right - e.x - cropMoveRelativeRight);
+			cropLeft = Math.max(
+				0,
+				e.x - originalImageBoundingBox.left - cropMoveRelativeLeft
+			);
+			cropRight = Math.max(
+				0,
+				originalImageBoundingBox.right - e.x - cropMoveRelativeRight
+			);
 		}
 	}
 
@@ -284,32 +331,43 @@
 	function startMoveCropBox(e: MouseEvent) {
 		e.preventDefault();
 		e.stopPropagation();
-		cropMoveRelativeTop = e.y - cropBox.getBoundingClientRect().top
-		cropMoveRelativeLeft = e.x - cropBox.getBoundingClientRect().left
-		cropMoveRelativeBottom = cropBox.getBoundingClientRect().bottom - e.y
-		cropMoveRelativeRight = cropBox.getBoundingClientRect().right - e.x
+		cropMoveRelativeTop = e.y - cropBox.getBoundingClientRect().top;
+		cropMoveRelativeLeft = e.x - cropBox.getBoundingClientRect().left;
+		cropMoveRelativeBottom = cropBox.getBoundingClientRect().bottom - e.y;
+		cropMoveRelativeRight = cropBox.getBoundingClientRect().right - e.x;
 		window.addEventListener("mousemove", moveCropBox, false);
 		window.addEventListener("mouseup", stopMoveCropBox, false);
 	}
-
 
 	function resizeCropBox(e: MouseEvent) {
 		e.preventDefault();
 		if (croppingDirs.includes(Dir.top)) {
 			cropTop = Math.max(0, e.y - originalImageBoundingBox.top);
-			cropTop = Math.min(cropTop, originalImageBoundingBox.height - cropBottom - CROP_MIN_HEIGHT)
+			cropTop = Math.min(
+				cropTop,
+				originalImageBoundingBox.height - cropBottom - CROP_MIN_HEIGHT
+			);
 		}
 		if (croppingDirs.includes(Dir.right)) {
 			cropRight = Math.max(0, originalImageBoundingBox.right - e.x);
-			cropRight = Math.min(cropRight, originalImageBoundingBox.width - cropLeft - CROP_MIN_WIDTH)
+			cropRight = Math.min(
+				cropRight,
+				originalImageBoundingBox.width - cropLeft - CROP_MIN_WIDTH
+			);
 		}
 		if (croppingDirs.includes(Dir.bottom)) {
 			cropBottom = Math.max(0, originalImageBoundingBox.bottom - e.y);
-			cropBottom = Math.min(cropBottom, originalImageBoundingBox.height - cropTop - CROP_MIN_HEIGHT)
+			cropBottom = Math.min(
+				cropBottom,
+				originalImageBoundingBox.height - cropTop - CROP_MIN_HEIGHT
+			);
 		}
 		if (croppingDirs.includes(Dir.left)) {
 			cropLeft = Math.max(0, e.x - originalImageBoundingBox.left);
-			cropLeft = Math.min(cropLeft, originalImageBoundingBox.width - cropRight - CROP_MIN_WIDTH)
+			cropLeft = Math.min(
+				cropLeft,
+				originalImageBoundingBox.width - cropRight - CROP_MIN_WIDTH
+			);
 		}
 	}
 
@@ -335,10 +393,10 @@
 				<label for="images">Select images:</label>
 				<input
 					accept="image/png, image/jpeg"
-					bind:files
 					id="images"
 					name="images"
 					type="file"
+					on:change={updateOriginalImage}
 				/>
 			</div>
 		</div>
@@ -560,63 +618,84 @@
 
 	<div class="image_row">
 		<div class="image_container original_image_container">
-			{#if originalImageBase64}
-				<img
-					src={originalImageBase64}
-					alt="selected img"
-					class="original_image image"
-					bind:this={originalImage}
+			<img
+				alt="selected img"
+				class="original_image image"
+				bind:this={originalImage}
+				style="visibility: {originalImageBase64 && !isImageLoading
+					? 'visible'
+					: 'hidden'};"
+			/>
+			<div
+				class="loader"
+				style="visibility: {isImageLoading ? 'visible' : 'hidden'};"
+			/>
+			<p
+				style="visibility: {!isImageLoading && !originalImageBase64
+					? 'visible'
+					: 'hidden'};"
+			>
+				No image selected
+			</p>
+			<div
+				class="crop_box"
+				bind:this={cropBox}
+				role="presentation"
+				on:mousedown={startMoveCropBox}
+				style="visibility: {originalImageBase64 &&
+				!isImageLoading &&
+				isCropEnabled
+					? 'visible'
+					: 'hidden'};"
+			>
+				<p class="crop_dimensions">
+					{cropRealWidth} × {cropRealHeight}
+				</p>
+				<div
+					class="corner top left"
+					role="presentation"
+					on:mousedown={(e) =>
+						startResizeCropBox(e, [Dir.top, Dir.left])}
 				/>
-				{#if isCropEnabled && originalImageBoundingBox}
-					<div
-						class="crop_box"
-						bind:this={cropBox}
-						role="presentation"
-						on:mousedown={startMoveCropBox}
-					>
-						<p class="crop_dimensions">{cropRealWidth} × {cropRealHeight}</p>
-						<div
-							class="corner top left"
-							role="presentation"
-							on:mousedown={(e) =>
-								startResizeCropBox(e, [Dir.top, Dir.left])}
-						/>
-						<div
-							class="side top"
-							role="presentation"
-							on:mousedown={(e) =>
-								startResizeCropBox(e, [Dir.top])}
-						/>
-						<div class="corner top right" role="presentation" 
-							on:mousedown={(e) =>
-								startResizeCropBox(e, [Dir.top, Dir.right])}
-						/>
-						<div class="side right" role="presentation" 
-							on:mousedown={(e) =>
-								startResizeCropBox(e, [Dir.right])}
-						/>
-						<div class="corner bottom right" role="presentation" 
-							on:mousedown={(e) =>
-								startResizeCropBox(e, [Dir.bottom, Dir.right])}
-						/>
-						<div class="side bottom" role="presentation" 
-							on:mousedown={(e) =>
-								startResizeCropBox(e, [Dir.bottom])}
-						/>
-						<div class="corner bottom left" role="presentation" 
-							on:mousedown={(e) =>
-								startResizeCropBox(e, [Dir.bottom, Dir.left])}
-						/>
-						<div class="side left" role="presentation" 
-							on:mousedown={(e) =>
-								startResizeCropBox(e, [Dir.left])}
-
-						/>
-					</div>
-				{/if}
-			{:else}
-				<p>No image selected</p>
-			{/if}
+				<div
+					class="side top"
+					role="presentation"
+					on:mousedown={(e) => startResizeCropBox(e, [Dir.top])}
+				/>
+				<div
+					class="corner top right"
+					role="presentation"
+					on:mousedown={(e) =>
+						startResizeCropBox(e, [Dir.top, Dir.right])}
+				/>
+				<div
+					class="side right"
+					role="presentation"
+					on:mousedown={(e) => startResizeCropBox(e, [Dir.right])}
+				/>
+				<div
+					class="corner bottom right"
+					role="presentation"
+					on:mousedown={(e) =>
+						startResizeCropBox(e, [Dir.bottom, Dir.right])}
+				/>
+				<div
+					class="side bottom"
+					role="presentation"
+					on:mousedown={(e) => startResizeCropBox(e, [Dir.bottom])}
+				/>
+				<div
+					class="corner bottom left"
+					role="presentation"
+					on:mousedown={(e) =>
+						startResizeCropBox(e, [Dir.bottom, Dir.left])}
+				/>
+				<div
+					class="side left"
+					role="presentation"
+					on:mousedown={(e) => startResizeCropBox(e, [Dir.left])}
+				/>
+			</div>
 		</div>
 		<div class="image_container">
 			{#if processedImageSource}
