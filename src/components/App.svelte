@@ -50,6 +50,7 @@
 	let isRemoveBackgroundEnabled: boolean = false;
 	let selectedRemoveBackgroundModel: string = "u2net";
 	let isRemoveBackgroundPostProcessEnabled: boolean = true;
+	let isRemoveBackgroundEdgeWhiteFilterEnabled: boolean = true;
 	let isFilterWhiteEnabled: boolean = false;
 	let selectedFilterWhiteModel: string = "luminocity";
 	let filterWhiteRange: number[] = [230, 255];
@@ -224,6 +225,7 @@
 				enabled: isRemoveBackgroundEnabled,
 				model: selectedRemoveBackgroundModel,
 				postProcess: isRemoveBackgroundPostProcessEnabled,
+				edgeWhiteFilter: isRemoveBackgroundEdgeWhiteFilterEnabled,
 				points,
 			};
 			const data = {
@@ -472,12 +474,25 @@
 					name="enable_background_removal_post_process"
 					bind:checked={isRemoveBackgroundPostProcessEnabled}
 				/>
-				<label for="enable_background_removal_post_process"
-					>enable post process mask</label
-				>
+				<label for="enable_background_removal_post_process">
+					enable post process mask
+				</label>
+			</div>
+			<div
+				class="button_item_horizontal {!isRemoveBackgroundEnabled &&
+					'disabled'}"
+			>
+				<input
+					type="checkbox"
+					id="enable_background_removal_edge_white_filter"
+					name="enable_background_removal_edge_white_filter"
+					bind:checked={isRemoveBackgroundEdgeWhiteFilterEnabled}
+				/>
+				<label for="enable_background_removal_edge_white_filter">
+					enable edge white filter
+				</label>
 			</div>
 		</div>
-
 		<div class="button_group">
 			<div class="button_item_horizontal">
 				<input
@@ -620,12 +635,10 @@
 		<div class="image_container original_image_container">
 			<div
 				class="loader original_image_content"
-				style="visibility: {isImageLoading 
-					? 'visible'
-					: 'hidden'};"
+				style="visibility: {isImageLoading ? 'visible' : 'hidden'};"
 			/>
 			<p
-				class = "original_image_content"
+				class="original_image_content"
 				style="visibility: {!isImageLoading && !originalImageBase64
 					? 'visible'
 					: 'hidden'};"
