@@ -48,9 +48,11 @@
 	let resizeWidth: number;
 	let resizeHeight: number;
 	let isRemoveBackgroundEnabled: boolean = false;
-	let selectedRemoveBackgroundModel: string = "u2net";
+	let selectedRemoveBackgroundModel: string = "u2netp";
 	let isRemoveBackgroundPostProcessEnabled: boolean = true;
 	let isRemoveBackgroundEdgeWhiteFilterEnabled: boolean = true;
+	let removeBackgroundEdgeWhiteFilterWidth: number = 2;
+	let removeBackgroundEdgeWhiteFilterRange: number[] = [150, 240];
 	let isFilterWhiteEnabled: boolean = false;
 	let selectedFilterWhiteModel: string = "luminocity";
 	let filterWhiteRange: number[] = [230, 255];
@@ -59,7 +61,7 @@
 	let proposedFileName: string = "processed.png";
 	let points: number[][] = [];
 	let isLoading: boolean = false;
-	let previewBackground: string = "checkered";
+	let previewBackground: string = "solid";
 	let backgroundColor: string = "#000000";
 	let fileName: string;
 	let originalImage: HTMLImageElement;
@@ -226,6 +228,9 @@
 				model: selectedRemoveBackgroundModel,
 				postProcess: isRemoveBackgroundPostProcessEnabled,
 				edgeWhiteFilter: isRemoveBackgroundEdgeWhiteFilterEnabled,
+				edgeWhiteFilterWidth: removeBackgroundEdgeWhiteFilterWidth,
+				edgeWhiteFilterThreshold: removeBackgroundEdgeWhiteFilterRange[0],
+				edgeWhiteFilterMax: removeBackgroundEdgeWhiteFilterRange[1],
 				points,
 			};
 			const data = {
@@ -450,7 +455,7 @@
 					>enable background removal</label
 				>
 			</div>
-			<div class="button_item {!isRemoveBackgroundEnabled && 'disabled'}">
+			<div class="button_item_horizontal {!isRemoveBackgroundEnabled && 'disabled'}">
 				<label for="model">model:</label>
 				<select
 					name="model"
@@ -492,6 +497,40 @@
 					enable edge white filter
 				</label>
 			</div>
+			<div
+				class="button_item_horizontal {(!isRemoveBackgroundEnabled ||
+					!isRemoveBackgroundEdgeWhiteFilterEnabled) &&
+					'disabled'}
+			"
+			>
+				<label for="edge_white_filter_width"> edge width </label>
+				<input
+					name="edge_white_filter_width"
+					id="edge_white_filter_width"
+					type="number"
+					min="1"
+					max="5"
+					bind:value={removeBackgroundEdgeWhiteFilterWidth}
+				/>
+			</div>
+
+			<div
+				class="button_item {(!isRemoveBackgroundEnabled ||
+					!isRemoveBackgroundEdgeWhiteFilterEnabled) &&
+					'disabled'}
+			"
+			>
+				<RangeSlider
+					id="range_container"
+					range
+					pushy
+					bind:values={removeBackgroundEdgeWhiteFilterRange}
+					float
+					min={0}
+					max={255}
+					step={1}
+				/>
+			</div>
 		</div>
 		<div class="button_group">
 			<div class="button_item_horizontal">
@@ -518,7 +557,6 @@
 				</select>
 			</div>
 			<div class="button_item {!isFilterWhiteEnabled && 'disabled'}">
-				<label for="range_container">range</label>
 				<RangeSlider
 					id="range_container"
 					range
@@ -758,7 +796,7 @@
 		display: flex;
 		flex-direction: column;
 		justify-content: center;
-		gap: 20px;
+		gap: 10px;
 		height: 200px;
 	}
 
@@ -766,7 +804,7 @@
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		gap: 8px;
+		gap: 5px;
 	}
 
 	.button_item_horizontal {
