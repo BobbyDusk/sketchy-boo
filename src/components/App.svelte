@@ -32,6 +32,7 @@
 		left,
 	}
 	const WHITE_FILTER_MODELS: string[] = [
+		"pillow",
 		"luminocity",
 		"average",
 		"lightness",
@@ -66,7 +67,7 @@
 	let removeBackgroundEdgeWhiteFilterWidth: number = 2;
 	let removeBackgroundEdgeWhiteFilterRange: number[] = [150, 240];
 	let isFilterWhiteEnabled: boolean = false;
-	let selectedFilterWhiteModel: string = "luminocity";
+	let selectedFilterWhiteModel: string = "pillow";
 	let filterWhiteRange: number[] = [230, 255];
 	let originalImageBase64: string | null = null;
 	let processedImageSource: string;
@@ -697,7 +698,7 @@
 			</p>
 			<img
 				alt="selected img"
-				class="original_image image original_image_content"
+				class="original_image image original_image_content checkered"
 				bind:this={originalImage}
 				style="visibility: {!isImageLoading && originalImageBase64
 					? 'visible'
@@ -925,7 +926,6 @@
 	.image {
 		max-width: 100%;
 		max-height: 100%;
-		background-color: red;
 	}
 
 	.checkered {
