@@ -8,11 +8,11 @@
 	// if so, crop based on transparency, if not, crop based on white
 	// TODO: Create feature that allows to scan paper with different square boxes, that then automatically detects square boxes,
 	// crops and removes background from whatever is inside and return all the images in a zipped file, maybe even have something
-	// with automatic naming of the file. For example, that you can just write the name in a different box, that it 
+	// with automatic naming of the file. For example, that you can just write the name in a different box, that it
 	// detect handwriting and then converts it the correct name. Also include the ability to add number, which represents the layer
 	// number and then automatically place all the layers in affinity in the correct order
 	// TODO: have two modes: manual and automatic.
-	// manual let's you completely define everything yourself. 
+	// manual let's you completely define everything yourself.
 	// automatic automatically finds the different objects, crops then and removes background
 	// maybe also have the ability to show the results one by one together with the ability to name
 	// it and tweak the settings
@@ -48,11 +48,14 @@
 		// "sam", TODO: enable once fixed
 	];
 
+	const MODES: string[] = ["automatic", "manual"];
+
 	const CROP_MIN_WIDTH = 40;
 	const CROP_MIN_HEIGHT = 40;
 
 	const PREVIEW_BACKGROUNDS: string[] = ["checkered", "solid"];
 
+	let selectedMode: string = "automatic";
 	let isCropEnabled: boolean = false;
 	let isAutoCropEnabled: boolean = true;
 	let cropOpacityThreshold: number[] = [10];
@@ -64,8 +67,8 @@
 	let selectedRemoveBackgroundModel: string = "u2netp";
 	let isRemoveBackgroundPostProcessEnabled: boolean = true;
 	let isRemoveBackgroundEdgeWhiteFilterEnabled: boolean = true;
-	let removeBackgroundEdgeWhiteFilterWidth: number = 2;
-	let removeBackgroundEdgeWhiteFilterRange: number[] = [150, 240];
+	let removeBackgroundEdgeWhiteFilterWidth: number = 4;
+	let removeBackgroundEdgeWhiteFilterRange: number[] = [100, 195];
 	let isFilterWhiteEnabled: boolean = false;
 	let selectedFilterWhiteModel: string = "pillow";
 	let filterWhiteRange: number[] = [230, 255];
@@ -242,12 +245,14 @@
 				postProcess: isRemoveBackgroundPostProcessEnabled,
 				edgeWhiteFilter: isRemoveBackgroundEdgeWhiteFilterEnabled,
 				edgeWhiteFilterWidth: removeBackgroundEdgeWhiteFilterWidth,
-				edgeWhiteFilterThreshold: removeBackgroundEdgeWhiteFilterRange[0],
+				edgeWhiteFilterThreshold:
+					removeBackgroundEdgeWhiteFilterRange[0],
 				edgeWhiteFilterMax: removeBackgroundEdgeWhiteFilterRange[1],
 				points,
 			};
 			const data = {
 				image: originalImageBase64,
+				mode: selectedMode,
 				crop,
 				resize,
 				filterWhite,
@@ -262,7 +267,7 @@
 				body: JSON.stringify(data),
 			});
 			const responseData = await response.json();
-			processedImageSource = responseData.image;
+			processedImageSource = responseData.images[0];
 			console.log(responseData.message);
 		} catch (error) {
 			console.log(`Error: ${error}`);
@@ -404,24 +409,59 @@
 		window.addEventListener("mousemove", resizeCropBox, false);
 		window.addEventListener("mouseup", stopResizeCropBox, false);
 	}
+
+	function condDisabled(condition: any): string {
+		if (condition) {
+			return "disabled"
+		} else {
+			return ""
+		}
+	}
+
+$:	disabledIfNoImage = condDisabled(!originalImageBase64)
+$:	disabledIfNoManual = condDisabled(!originalImageBase64 || selectedMode != "manual")
+$:	disabledIfNoRemoveBackground = condDisabled(!isRemoveBackgroundEnabled)
+$:	disabledIfNoEdgeWhiteFilter = condDisabled(!isRemoveBackgroundEnabled || !isRemoveBackgroundEdgeWhiteFilterEnabled)
+$:	disabledIfNoFilterWhite = condDisabled(!isFilterWhiteEnabled)
+$:	disabledIfNoResize = condDisabled(!isResizeEnabled)
+$:	disabledIfCheckered = condDisabled(previewBackground == 'checkered')
+
 </script>
 
 <div class="app_root">
-	<div class="buttons_container">
+	<div class="left buttons_container">
 		<div class="button_group">
 			<div class="button_item">
-				<label for="images">Select images:</label>
+				<label for="images" class="button">Select image</label>
 				<input
 					accept="image/png, image/jpeg"
 					id="images"
 					name="images"
 					type="file"
+					class="file_input"
 					on:change={updateOriginalImage}
 				/>
 			</div>
 		</div>
 
-		<div class="button_group">
+		<div class="button_group {disabledIfNoImage}">
+			<div class="button_item_horizontal">
+				<label for="model">mode:</label>
+				<select
+					name="mode"
+					bind:value={selectedMode}
+					class="button-item"
+				>
+					{#each MODES as mode}
+						<option value={mode}>
+							{mode}
+						</option>
+					{/each}
+				</select>
+			</div>
+		</div>
+
+		<div class="button_group {disabledIfNoManual}">
 			<div class="button_item_horizontal">
 				<input
 					type="checkbox"
@@ -456,7 +496,7 @@
 			</div>
 		</div>
 
-		<div class="button_group">
+		<div class="button_group {disabledIfNoManual}">
 			<div class="button_item_horizontal">
 				<input
 					type="checkbox"
@@ -468,7 +508,9 @@
 					>enable background removal</label
 				>
 			</div>
-			<div class="button_item_horizontal {!isRemoveBackgroundEnabled && 'disabled'}">
+			<div
+				class="button_item_horizontal {disabledIfNoRemoveBackground}"
+			>
 				<label for="model">model:</label>
 				<select
 					name="model"
@@ -483,8 +525,7 @@
 				</select>
 			</div>
 			<div
-				class="button_item_horizontal {!isRemoveBackgroundEnabled &&
-					'disabled'}"
+				class="button_item_horizontal {disabledIfNoRemoveBackground}"
 			>
 				<input
 					type="checkbox"
@@ -497,8 +538,7 @@
 				</label>
 			</div>
 			<div
-				class="button_item_horizontal {!isRemoveBackgroundEnabled &&
-					'disabled'}"
+				class="button_item_horizontal {disabledIfNoRemoveBackground}"
 			>
 				<input
 					type="checkbox"
@@ -511,10 +551,7 @@
 				</label>
 			</div>
 			<div
-				class="button_item_horizontal {(!isRemoveBackgroundEnabled ||
-					!isRemoveBackgroundEdgeWhiteFilterEnabled) &&
-					'disabled'}
-			"
+				class="button_item_horizontal {disabledIfNoEdgeWhiteFilter}"
 			>
 				<label for="edge_white_filter_width"> edge width </label>
 				<input
@@ -522,15 +559,13 @@
 					id="edge_white_filter_width"
 					type="number"
 					min="1"
-					max="5"
+					max="10"
 					bind:value={removeBackgroundEdgeWhiteFilterWidth}
 				/>
 			</div>
 
 			<div
-				class="button_item {(!isRemoveBackgroundEnabled ||
-					!isRemoveBackgroundEdgeWhiteFilterEnabled) &&
-					'disabled'}
+				class="button_item {disabledIfNoEdgeWhiteFilter}
 			"
 			>
 				<RangeSlider
@@ -545,7 +580,8 @@
 				/>
 			</div>
 		</div>
-		<div class="button_group">
+
+		<div class="button_group {disabledIfNoManual}">
 			<div class="button_item_horizontal">
 				<input
 					type="checkbox"
@@ -555,7 +591,7 @@
 				/>
 				<label for="enable_filter_white">enable filter white</label>
 			</div>
-			<div class="button_item {!isFilterWhiteEnabled && 'disabled'}">
+			<div class="button_item {disabledIfNoFilterWhite}">
 				<label for="model">model:</label>
 				<select
 					name="model"
@@ -569,7 +605,7 @@
 					{/each}
 				</select>
 			</div>
-			<div class="button_item {!isFilterWhiteEnabled && 'disabled'}">
+			<div class="button_item {disabledIfNoFilterWhite}">
 				<RangeSlider
 					id="range_container"
 					range
@@ -583,7 +619,7 @@
 			</div>
 		</div>
 
-		<div class="button_group">
+		<div class="button_group {disabledIfNoManual}">
 			<div class="button_item_horizontal">
 				<input
 					type="checkbox"
@@ -593,7 +629,7 @@
 				/>
 				<label for="enable_resize">enable resize</label>
 			</div>
-			<div class="button_item {!isResizeEnabled && 'disabled'}">
+			<div class="button_item {disabledIfNoResize}">
 				<label for="resize_width">width</label>
 				<input
 					type="number"
@@ -604,7 +640,7 @@
 					bind:this={resizeWidthInput}
 				/>
 			</div>
-			<div class="button_item {!isResizeEnabled && 'disabled'}">
+			<div class="button_item {disabledIfNoResize}">
 				<label for="resize_height">height</label>
 				<input
 					type="number"
@@ -617,7 +653,7 @@
 			</div>
 		</div>
 
-		<div class="button_group">
+		<div class="button_group {disabledIfNoImage}">
 			{#if isLoading}
 				<div class="loader" />
 			{:else}
@@ -626,7 +662,9 @@
 				</button>
 			{/if}
 		</div>
+	</div>
 
+	<div class="right buttons_container">
 		{#if processedImageSource}
 			<div class="button_group">
 				<div class="button_item">
@@ -645,8 +683,7 @@
 				</div>
 
 				<div
-					class="button_item_horizontal {previewBackground ==
-						'checkered' && 'disabled'}"
+					class="button_item_horizontal {disabledIfCheckered}"
 				>
 					<input
 						type="color"
@@ -682,123 +719,128 @@
 		{/if}
 	</div>
 
-	<div class="image_row">
-		<div class="image_container original_image_container">
-			<div
-				class="loader original_image_content"
-				style="visibility: {isImageLoading ? 'visible' : 'hidden'};"
-			/>
-			<p
-				class="original_image_content"
-				style="visibility: {!isImageLoading && !originalImageBase64
-					? 'visible'
-					: 'hidden'};"
-			>
-				No image selected
+	<div class="image_container left">
+		<div
+			class="loader original_image_content"
+			style="visibility: {isImageLoading ? 'visible' : 'hidden'};"
+		/>
+		<p
+			class="original_image_content"
+			style="visibility: {!isImageLoading && !originalImageBase64
+				? 'visible'
+				: 'hidden'};"
+		>
+			No image selected
+		</p>
+		<img
+			alt="selected img"
+			class="original_image image original_image_content checkered"
+			bind:this={originalImage}
+			style="visibility: {!isImageLoading && originalImageBase64
+				? 'visible'
+				: 'hidden'};"
+		/>
+		<div
+			class="crop_box original_image_content"
+			bind:this={cropBox}
+			role="presentation"
+			on:mousedown={startMoveCropBox}
+			style="visibility: {!isImageLoading &&
+			originalImageBase64 &&
+			isCropEnabled
+				? 'visible'
+				: 'hidden'};"
+		>
+			<p class="crop_dimensions">
+				{cropRealWidth} × {cropRealHeight}
 			</p>
-			<img
-				alt="selected img"
-				class="original_image image original_image_content checkered"
-				bind:this={originalImage}
-				style="visibility: {!isImageLoading && originalImageBase64
-					? 'visible'
-					: 'hidden'};"
+			<div
+				class="corner top left"
+				role="presentation"
+				on:mousedown={(e) => startResizeCropBox(e, [Dir.top, Dir.left])}
 			/>
 			<div
-				class="crop_box original_image_content"
-				bind:this={cropBox}
+				class="side top"
 				role="presentation"
-				on:mousedown={startMoveCropBox}
-				style="visibility: {!isImageLoading &&
-				originalImageBase64 &&
-				isCropEnabled
-					? 'visible'
-					: 'hidden'};"
-			>
-				<p class="crop_dimensions">
-					{cropRealWidth} × {cropRealHeight}
-				</p>
-				<div
-					class="corner top left"
-					role="presentation"
-					on:mousedown={(e) =>
-						startResizeCropBox(e, [Dir.top, Dir.left])}
-				/>
-				<div
-					class="side top"
-					role="presentation"
-					on:mousedown={(e) => startResizeCropBox(e, [Dir.top])}
-				/>
-				<div
-					class="corner top right"
-					role="presentation"
-					on:mousedown={(e) =>
-						startResizeCropBox(e, [Dir.top, Dir.right])}
-				/>
-				<div
-					class="side right"
-					role="presentation"
-					on:mousedown={(e) => startResizeCropBox(e, [Dir.right])}
-				/>
-				<div
-					class="corner bottom right"
-					role="presentation"
-					on:mousedown={(e) =>
-						startResizeCropBox(e, [Dir.bottom, Dir.right])}
-				/>
-				<div
-					class="side bottom"
-					role="presentation"
-					on:mousedown={(e) => startResizeCropBox(e, [Dir.bottom])}
-				/>
-				<div
-					class="corner bottom left"
-					role="presentation"
-					on:mousedown={(e) =>
-						startResizeCropBox(e, [Dir.bottom, Dir.left])}
-				/>
-				<div
-					class="side left"
-					role="presentation"
-					on:mousedown={(e) => startResizeCropBox(e, [Dir.left])}
-				/>
-			</div>
+				on:mousedown={(e) => startResizeCropBox(e, [Dir.top])}
+			/>
+			<div
+				class="corner top right"
+				role="presentation"
+				on:mousedown={(e) =>
+					startResizeCropBox(e, [Dir.top, Dir.right])}
+			/>
+			<div
+				class="side right"
+				role="presentation"
+				on:mousedown={(e) => startResizeCropBox(e, [Dir.right])}
+			/>
+			<div
+				class="corner bottom right"
+				role="presentation"
+				on:mousedown={(e) =>
+					startResizeCropBox(e, [Dir.bottom, Dir.right])}
+			/>
+			<div
+				class="side bottom"
+				role="presentation"
+				on:mousedown={(e) => startResizeCropBox(e, [Dir.bottom])}
+			/>
+			<div
+				class="corner bottom left"
+				role="presentation"
+				on:mousedown={(e) =>
+					startResizeCropBox(e, [Dir.bottom, Dir.left])}
+			/>
+			<div
+				class="side left"
+				role="presentation"
+				on:mousedown={(e) => startResizeCropBox(e, [Dir.left])}
+			/>
 		</div>
-		<div class="image_container">
-			{#if processedImageSource}
-				<img
-					src={processedImageSource}
-					class="image {previewBackground}"
-					alt="processed img"
-					style={previewBackground == "solid"
-						? `background-color: ${backgroundColor}`
-						: ""}
-				/>
-			{/if}
-		</div>
+	</div>
+	<div class="image_container right">
+		{#if processedImageSource}
+			<img
+				src={processedImageSource}
+				class="image {previewBackground}"
+				alt="processed img"
+				style={previewBackground == "solid"
+					? `background-color: ${backgroundColor}`
+					: ""}
+			/>
+		{/if}
 	</div>
 </div>
 
 <style>
 	.app_root {
-		width: 100%;
-		min-height: calc(100vh - var(--header-height));
-		margin: 0;
-		padding: 0 10%;
-		display: flex;
-		flex-direction: column;
-		gap: 25px;
+		width: 100vw;
+		height: 100vh;
+		display: grid;
+		grid-template-columns: 15% 35% 35% 15%;
 		box-sizing: border-box;
-		align-items: stretch;
+		font-size: 10pt;
 	}
 
 	.buttons_container {
-		width: 100%;
 		display: flex;
-		flex-direction: row;
-		justify-content: center;
-		align-items: center;
+		flex-direction: column;
+		justify-content: flex-start;
+		align-items: stretch;
 		gap: 10px;
+		grid-row: 1;
+		padding: 10px;
+		overflow-y: auto;
+		overflow-x: hidden;
+	}
+
+	.buttons_container.left {
+		grid-column: 1;
+	}
+
+	.buttons_container.right {
+		grid-column: 4;
 	}
 
 	.button_group {
@@ -810,7 +852,8 @@
 		flex-direction: column;
 		justify-content: center;
 		gap: 10px;
-		height: 200px;
+		background-color: lightgray;
+		border-radius: 5px;
 	}
 
 	.button_item {
@@ -834,10 +877,10 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		font-size: 12pt;
+		font-size: 10pt;
 		color: black;
 		text-decoration: none;
-		background-color: lightgray;
+		background-color: white;
 	}
 
 	.button:hover {
@@ -877,45 +920,25 @@
 		height: 0;
 	}
 
-	.image_row {
-		width: 100%;
-		display: grid;
-		grid-template-columns: 1fr 1fr;
-		gap: 20px;
-	}
-
-	.left,
-	.right {
-		display: flex;
-		flex-direction: row;
-		gap: 20px;
-	}
-
-	.left {
-		grid-column: 1;
-	}
-
-	.right {
-		grid-column: 2;
-	}
-
 	.image_container {
 		display: grid;
 		grid-template-columns: 100%;
 		grid-template-rows: 100%;
 		align-items: center;
 		justify-items: center;
-		/*
-		display: flex;
-		justify-content: center;
-		align-items: center;
-		*/
-		width: 40vw;
-		height: 60vh;
+		grid-row: 1;
 	}
 
-	.original_image_container {
+	.image_container.left {
 		position: relative;
+		grid-column: 2;
+		background-color: green;
+	}
+
+	.image_container.right {
+		position: relative;
+		grid-column: 3;
+		background-color: magenta;
 	}
 
 	.original_image_content {
@@ -1025,6 +1048,7 @@
 
 	.disabled {
 		opacity: 0.4;
+		display: none;
 	}
 
 	.crop_box {
@@ -1145,5 +1169,9 @@
 		top: -2.5em;
 		right: 0.5em;
 		color: red;
+	}
+
+	.file_input {
+		display: none;
 	}
 </style>
