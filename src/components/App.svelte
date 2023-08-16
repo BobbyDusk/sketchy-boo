@@ -16,6 +16,9 @@
 	// automatic automatically finds the different objects, crops then and removes background
 	// maybe also have the ability to show the results one by one together with the ability to name
 	// it and tweak the settings
+	// TODO: use processedImage as source for further processing
+	// TODO: click image -> open modal with download button
+	// TODO: hover over image -> 2 buttons: show modal and download
 
 	// @ts-ignore
 	import RangeSlider from "svelte-range-slider-pips";
@@ -961,6 +964,18 @@
 	.image {
 		max-width: 100%;
 		max-height: 100vh;
+	}
+
+	.real_size {
+		max-width: 100%;
+		max-height: 100vh;
+	}
+
+	.contained_size {
+		width: 100%;
+		height: 100%;
+		max-height: 100vh;
+		object-fit: contain;
 	}
 
 	.checkered {
