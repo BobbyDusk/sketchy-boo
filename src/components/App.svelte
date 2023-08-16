@@ -50,8 +50,8 @@
 
 	const MODES: string[] = ["automatic", "manual"];
 
-	const CROP_MIN_WIDTH = 40;
-	const CROP_MIN_HEIGHT = 40;
+	const CROP_MIN_WIDTH = 20;
+	const CROP_MIN_HEIGHT = 20;
 
 	const PREVIEW_BACKGROUNDS: string[] = ["checkered", "solid", "none"];
 
@@ -960,7 +960,7 @@
 
 	.image {
 		max-width: 100%;
-		max-height: 100%;
+		max-height: 100vh;
 	}
 
 	.checkered {
