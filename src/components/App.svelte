@@ -19,6 +19,7 @@
 	// TODO: use processedImage as source for further processing
 	// TODO: click image -> open modal with download button
 	// TODO: hover over image -> 2 buttons: show modal and download
+	// TODO choice between actual size of image or real size of image. See css classes .actual-size and .contained-size
 
 	// @ts-ignore
 	import RangeSlider from "svelte-range-slider-pips";
