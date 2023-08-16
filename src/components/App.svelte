@@ -53,7 +53,7 @@
 	const CROP_MIN_WIDTH = 40;
 	const CROP_MIN_HEIGHT = 40;
 
-	const PREVIEW_BACKGROUNDS: string[] = ["checkered", "solid"];
+	const PREVIEW_BACKGROUNDS: string[] = ["checkered", "solid", "none"];
 
 	let selectedMode: string = "automatic";
 	let isCropEnabled: boolean = false;
@@ -73,7 +73,8 @@
 	let selectedFilterWhiteModel: string = "pillow";
 	let filterWhiteRange: number[] = [230, 255];
 	let originalImageBase64: string | null = null;
-	let processedImageSource: string;
+	let processedImageSources: string[] = [];
+	let processedZip: string;
 	let proposedFileName: string = "processed.png";
 	let points: number[][] = [];
 	let isLoading: boolean = false;
@@ -267,7 +268,8 @@
 				body: JSON.stringify(data),
 			});
 			const responseData = await response.json();
-			processedImageSource = responseData.images[0];
+			processedImageSources = responseData.images;
+			processedZip = responseData.zip;
 			console.log(responseData.message);
 		} catch (error) {
 			console.log(`Error: ${error}`);
@@ -412,20 +414,24 @@
 
 	function condDisabled(condition: any): string {
 		if (condition) {
-			return "disabled"
+			return "disabled";
 		} else {
-			return ""
+			return "";
 		}
 	}
 
-$:	disabledIfNoImage = condDisabled(!originalImageBase64)
-$:	disabledIfNoManual = condDisabled(!originalImageBase64 || selectedMode != "manual")
-$:	disabledIfNoRemoveBackground = condDisabled(!isRemoveBackgroundEnabled)
-$:	disabledIfNoEdgeWhiteFilter = condDisabled(!isRemoveBackgroundEnabled || !isRemoveBackgroundEdgeWhiteFilterEnabled)
-$:	disabledIfNoFilterWhite = condDisabled(!isFilterWhiteEnabled)
-$:	disabledIfNoResize = condDisabled(!isResizeEnabled)
-$:	disabledIfCheckered = condDisabled(previewBackground == 'checkered')
-
+	$: disabledIfNoImage = condDisabled(!originalImageBase64);
+	$: disabledIfNoManual = condDisabled(
+		!originalImageBase64 || selectedMode != "manual"
+	);
+	$: disabledIfNoRemoveBackground = condDisabled(!isRemoveBackgroundEnabled);
+	$: disabledIfNoEdgeWhiteFilter = condDisabled(
+		!isRemoveBackgroundEnabled || !isRemoveBackgroundEdgeWhiteFilterEnabled
+	);
+	$: disabledIfNoFilterWhite = condDisabled(!isFilterWhiteEnabled);
+	$: disabledIfNoResize = condDisabled(!isResizeEnabled);
+	$: disabledIfNotSolid = condDisabled(previewBackground != "solid");
+	$: disabledIfMultipleImages = condDisabled(processedImageSources.length > 1);
 </script>
 
 <div class="app_root">
@@ -469,7 +475,7 @@ $:	disabledIfCheckered = condDisabled(previewBackground == 'checkered')
 					name="enable_crop"
 					bind:checked={isCropEnabled}
 				/>
-				<label for="enable_crop">enable crop</label>
+				<label for="enable_crop">crop</label>
 			</div>
 			<div class="button_item_horizontal {!isCropEnabled && 'disabled'}">
 				<input
@@ -478,10 +484,11 @@ $:	disabledIfCheckered = condDisabled(previewBackground == 'checkered')
 					name="enable_auto_crop"
 					bind:checked={isAutoCropEnabled}
 				/>
-				<label for="enable_auto_crop">enable auto crop</label>
+				<label for="enable_auto_crop">auto crop</label>
 			</div>
 			<div
-				class="button_item {(!isCropEnabled || !isAutoCropEnabled) &&
+				class="button_item stretch {(!isCropEnabled ||
+					!isAutoCropEnabled) &&
 					'disabled'}"
 			>
 				<label for="opacity_threshold">opacity threshold</label>
@@ -504,13 +511,10 @@ $:	disabledIfCheckered = condDisabled(previewBackground == 'checkered')
 					name="enable_background_removal"
 					bind:checked={isRemoveBackgroundEnabled}
 				/>
-				<label for="enable_background_removal"
-					>enable background removal</label
+				<label for="enable_background_removal">background removal</label
 				>
 			</div>
-			<div
-				class="button_item_horizontal {disabledIfNoRemoveBackground}"
-			>
+			<div class="button_item_horizontal {disabledIfNoRemoveBackground}">
 				<label for="model">model:</label>
 				<select
 					name="model"
@@ -524,9 +528,7 @@ $:	disabledIfCheckered = condDisabled(previewBackground == 'checkered')
 					{/each}
 				</select>
 			</div>
-			<div
-				class="button_item_horizontal {disabledIfNoRemoveBackground}"
-			>
+			<div class="button_item_horizontal {disabledIfNoRemoveBackground}">
 				<input
 					type="checkbox"
 					id="enable_background_removal_post_process"
@@ -534,12 +536,10 @@ $:	disabledIfCheckered = condDisabled(previewBackground == 'checkered')
 					bind:checked={isRemoveBackgroundPostProcessEnabled}
 				/>
 				<label for="enable_background_removal_post_process">
-					enable post process mask
+					post process mask
 				</label>
 			</div>
-			<div
-				class="button_item_horizontal {disabledIfNoRemoveBackground}"
-			>
+			<div class="button_item_horizontal {disabledIfNoRemoveBackground}">
 				<input
 					type="checkbox"
 					id="enable_background_removal_edge_white_filter"
@@ -547,13 +547,11 @@ $:	disabledIfCheckered = condDisabled(previewBackground == 'checkered')
 					bind:checked={isRemoveBackgroundEdgeWhiteFilterEnabled}
 				/>
 				<label for="enable_background_removal_edge_white_filter">
-					enable edge white filter
+					edge white filter
 				</label>
 			</div>
-			<div
-				class="button_item_horizontal {disabledIfNoEdgeWhiteFilter}"
-			>
-				<label for="edge_white_filter_width"> edge width </label>
+			<div class="button_item_horizontal {disabledIfNoEdgeWhiteFilter}">
+				<label for="edge_white_filter_width">edge width </label>
 				<input
 					name="edge_white_filter_width"
 					id="edge_white_filter_width"
@@ -565,7 +563,7 @@ $:	disabledIfCheckered = condDisabled(previewBackground == 'checkered')
 			</div>
 
 			<div
-				class="button_item {disabledIfNoEdgeWhiteFilter}
+				class="button_item stretch {disabledIfNoEdgeWhiteFilter}
 			"
 			>
 				<RangeSlider
@@ -589,7 +587,7 @@ $:	disabledIfCheckered = condDisabled(previewBackground == 'checkered')
 					name="enable_filter_white"
 					bind:checked={isFilterWhiteEnabled}
 				/>
-				<label for="enable_filter_white">enable filter white</label>
+				<label for="enable_filter_white">filter white</label>
 			</div>
 			<div class="button_item {disabledIfNoFilterWhite}">
 				<label for="model">model:</label>
@@ -605,7 +603,7 @@ $:	disabledIfCheckered = condDisabled(previewBackground == 'checkered')
 					{/each}
 				</select>
 			</div>
-			<div class="button_item {disabledIfNoFilterWhite}">
+			<div class="button_item stretch {disabledIfNoFilterWhite}">
 				<RangeSlider
 					id="range_container"
 					range
@@ -627,7 +625,7 @@ $:	disabledIfCheckered = condDisabled(previewBackground == 'checkered')
 					name="enable_resize"
 					bind:checked={isResizeEnabled}
 				/>
-				<label for="enable_resize">enable resize</label>
+				<label for="enable_resize">resize</label>
 			</div>
 			<div class="button_item {disabledIfNoResize}">
 				<label for="resize_width">width</label>
@@ -665,7 +663,7 @@ $:	disabledIfCheckered = condDisabled(previewBackground == 'checkered')
 	</div>
 
 	<div class="right buttons_container">
-		{#if processedImageSource}
+		{#if processedImageSources.length > 0}
 			<div class="button_group">
 				<div class="button_item">
 					<label for="preview_background">preview background:</label>
@@ -682,9 +680,7 @@ $:	disabledIfCheckered = condDisabled(previewBackground == 'checkered')
 					</select>
 				</div>
 
-				<div
-					class="button_item_horizontal {disabledIfCheckered}"
-				>
+				<div class="button_item_horizontal {disabledIfNotSolid}">
 					<input
 						type="color"
 						bind:value={backgroundColor}
@@ -695,9 +691,9 @@ $:	disabledIfCheckered = condDisabled(previewBackground == 'checkered')
 			</div>
 		{/if}
 
-		{#if processedImageSource}
+		{#if processedImageSources.length > 0}
 			<div class="button_group">
-				<div class="button_item">
+				<div class="button_item {disabledIfMultipleImages}">
 					<label for="file_name">file name</label>
 					<input
 						type="text"
@@ -706,11 +702,14 @@ $:	disabledIfCheckered = condDisabled(previewBackground == 'checkered')
 						bind:value={fileName}
 					/>
 				</div>
-
 				<a
 					target="_blank"
-					href={processedImageSource}
-					download={fileName || proposedFileName}
+					href={processedImageSources.length > 1
+						? processedZip
+						: processedImageSources[0]}
+					download={processedImageSources.length > 1
+						? "processed_images.zip"
+						: fileName || proposedFileName}
 					class="button_item button"
 				>
 					Download
@@ -800,7 +799,7 @@ $:	disabledIfCheckered = condDisabled(previewBackground == 'checkered')
 		</div>
 	</div>
 	<div class="image_container right">
-		{#if processedImageSource}
+		{#each processedImageSources as processedImageSource}
 			<img
 				src={processedImageSource}
 				class="image {previewBackground}"
@@ -809,7 +808,7 @@ $:	disabledIfCheckered = condDisabled(previewBackground == 'checkered')
 					? `background-color: ${backgroundColor}`
 					: ""}
 			/>
-		{/if}
+		{/each}
 	</div>
 </div>
 
@@ -818,9 +817,11 @@ $:	disabledIfCheckered = condDisabled(previewBackground == 'checkered')
 		width: 100vw;
 		height: 100vh;
 		display: grid;
-		grid-template-columns: 15% 35% 35% 15%;
+		grid-template-columns: 1fr 3fr 3fr 1fr;
+		column-gap: 15px;
 		box-sizing: border-box;
 		font-size: 10pt;
+		background-color: white;
 	}
 
 	.buttons_container {
@@ -833,6 +834,7 @@ $:	disabledIfCheckered = condDisabled(previewBackground == 'checkered')
 		padding: 10px;
 		overflow-y: auto;
 		overflow-x: hidden;
+		/* background-color: hsl(0, 0%, 80%); */
 	}
 
 	.buttons_container.left {
@@ -851,8 +853,9 @@ $:	disabledIfCheckered = condDisabled(previewBackground == 'checkered')
 		display: flex;
 		flex-direction: column;
 		justify-content: center;
+		align-items: center;
 		gap: 10px;
-		background-color: lightgray;
+		background-color: hsl(0, 0%, 90%);
 		border-radius: 5px;
 	}
 
@@ -861,6 +864,10 @@ $:	disabledIfCheckered = condDisabled(previewBackground == 'checkered')
 		flex-direction: column;
 		align-items: center;
 		gap: 5px;
+	}
+
+	label {
+		text-align: center;
 	}
 
 	.button_item_horizontal {
@@ -895,6 +902,10 @@ $:	disabledIfCheckered = condDisabled(previewBackground == 'checkered')
 		gap: 10px;
 	}
 
+	.stretch {
+		align-self: stretch;
+	}
+
 	:global(#range_container) {
 		width: 100%;
 		background-image: linear-gradient(to right, black, white);
@@ -920,7 +931,9 @@ $:	disabledIfCheckered = condDisabled(previewBackground == 'checkered')
 		height: 0;
 	}
 
-	.image_container {
+	.image_container.left {
+		position: relative;
+		grid-column: 2;
 		display: grid;
 		grid-template-columns: 100%;
 		grid-template-rows: 100%;
@@ -929,16 +942,15 @@ $:	disabledIfCheckered = condDisabled(previewBackground == 'checkered')
 		grid-row: 1;
 	}
 
-	.image_container.left {
-		position: relative;
-		grid-column: 2;
-		background-color: green;
-	}
-
 	.image_container.right {
 		position: relative;
 		grid-column: 3;
-		background-color: magenta;
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+		align-items: center;
+		justify-items: center;
+		grid-gap: 10px;
+		overflow-y: auto;
 	}
 
 	.original_image_content {
@@ -1047,7 +1059,6 @@ $:	disabledIfCheckered = condDisabled(previewBackground == 'checkered')
 	}
 
 	.disabled {
-		opacity: 0.4;
 		display: none;
 	}
 
