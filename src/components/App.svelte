@@ -53,6 +53,7 @@
 	];
 
 	const MODES: string[] = ["automatic", "manual"];
+	const FORMATS: string[] = ["PNG", "WEBP"]
 
 	const CROP_MIN_WIDTH = 20;
 	const CROP_MIN_HEIGHT = 20;
@@ -105,6 +106,7 @@
 	let resizeWidthInput: HTMLInputElement;
 	let resizeHeightInput: HTMLInputElement;
 	let isImageLoading: boolean = false;
+	let format: string = "PNG"
 
 	function updateResizeWidth() {
 		resizeWidth = Math.round(
@@ -207,7 +209,7 @@
 	function setProposedFileName(file: File) {
 		proposedFileName = `${getBaseFilenameWithoutExtension(
 			file.name
-		)}_processed.png`;
+		)}_processed.${format.toLowerCase()}`;
 	}
 
 	function getBaseFilenameWithoutExtension(filename: string): string {
@@ -262,6 +264,7 @@
 				resize,
 				filterWhite,
 				removeBackground,
+				format
 			};
 			const response = await fetch(`${SERVER_URL}/upload`, {
 				method: "POST",
@@ -444,7 +447,7 @@
 			<div class="button_item">
 				<label for="images" class="button">Select image</label>
 				<input
-					accept="image/png, image/jpeg"
+					accept="image/png, image/jpeg, image/webp"
 					id="images"
 					name="images"
 					type="file"
@@ -654,6 +657,24 @@
 				/>
 			</div>
 		</div>
+
+		<div class="button_group {disabledIfNoImage}">
+			<div class="button_item">
+				<label for="format">output format:</label>
+				<select
+					name="format"
+					bind:value={format}
+					class="button-item"
+				>
+					{#each FORMATS as format}
+						<option value={format}>
+							{format}
+						</option>
+					{/each}
+				</select>
+			</div>
+		</div>
+
 
 		<div class="button_group {disabledIfNoImage}">
 			{#if isLoading}
