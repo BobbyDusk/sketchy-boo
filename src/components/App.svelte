@@ -54,6 +54,7 @@
 
 	const MODES: string[] = ["automatic", "manual"];
 	const FORMATS: string[] = ["PNG", "WEBP"]
+	const BACKGROUND_COLORS: string[] = ["white", "black"]
 
 	const CROP_MIN_WIDTH = 20;
 	const CROP_MIN_HEIGHT = 20;
@@ -61,6 +62,7 @@
 	const PREVIEW_BACKGROUNDS: string[] = ["checkered", "solid", "none"];
 
 	let selectedMode: string = "automatic";
+	let selectedBackgroundColor: string = "white";
 	let isCropEnabled: boolean = false;
 	let isAutoCropEnabled: boolean = true;
 	let cropOpacityThreshold: number[] = [10];
@@ -84,7 +86,7 @@
 	let points: number[][] = [];
 	let isLoading: boolean = false;
 	let previewBackground: string = "solid";
-	let backgroundColor: string = "#000000";
+	let previewBackgroundColor: string = "#000000";
 	let fileName: string;
 	let originalImage: HTMLImageElement;
 	let originalImageBoundingBox: DOMRect;
@@ -260,6 +262,7 @@
 			const data = {
 				image: originalImageBase64,
 				mode: selectedMode,
+				backgroundColor: selectedBackgroundColor,
 				crop,
 				resize,
 				filterWhite,
@@ -441,7 +444,7 @@
 	$: disabledIfMultipleImages = condDisabled(processedImageSources.length > 1);
 </script>
 
-<div class="app_root">
+<div class="app_root" style={`--backgroundColor: ${selectedBackgroundColor == "white" ? "white" : "black"}; --foregroundColor: ${selectedBackgroundColor == "white" ? "black" : "white"}`}>
 	<div class="left buttons_container">
 		<div class="button_group">
 			<div class="button_item">
@@ -468,6 +471,21 @@
 					{#each MODES as mode}
 						<option value={mode}>
 							{mode}
+						</option>
+					{/each}
+				</select>
+			</div>
+
+			<div class="button_item_horizontal">
+				<label for="backgroundColor">background color:</label>
+				<select
+					name="backgroundColor"
+					bind:value={selectedBackgroundColor}
+					class="button-item"
+				>
+					{#each BACKGROUND_COLORS as color}
+						<option value={color}>
+							{color}
 						</option>
 					{/each}
 				</select>
@@ -554,7 +572,7 @@
 					bind:checked={isRemoveBackgroundEdgeWhiteFilterEnabled}
 				/>
 				<label for="enable_background_removal_edge_white_filter">
-					edge white filter
+					edge {selectedBackgroundColor} filter
 				</label>
 			</div>
 			<div class="button_item_horizontal {disabledIfNoEdgeWhiteFilter}">
@@ -564,7 +582,7 @@
 					id="edge_white_filter_width"
 					type="number"
 					min="1"
-					max="10"
+					max="100"
 					bind:value={removeBackgroundEdgeWhiteFilterWidth}
 				/>
 			</div>
@@ -594,7 +612,7 @@
 					name="enable_filter_white"
 					bind:checked={isFilterWhiteEnabled}
 				/>
-				<label for="enable_filter_white">filter white</label>
+				<label for="enable_filter_white">filter {selectedBackgroundColor}</label>
 			</div>
 			<div class="button_item {disabledIfNoFilterWhite}">
 				<label for="model">model:</label>
@@ -708,7 +726,7 @@
 				<div class="button_item_horizontal {disabledIfNotSolid}">
 					<input
 						type="color"
-						bind:value={backgroundColor}
+						bind:value={previewBackgroundColor}
 						name="background_color"
 					/>
 					<label for="background_color">color</label>
@@ -830,7 +848,7 @@
 				class="image {previewBackground}"
 				alt="processed img"
 				style={previewBackground == "solid"
-					? `background-color: ${backgroundColor}`
+					? `background-color: ${previewBackgroundColor}`
 					: ""}
 			/>
 		{/each}
@@ -933,7 +951,7 @@
 
 	:global(#range_container) {
 		width: 100%;
-		background-image: linear-gradient(to right, black, white);
+		background-image: linear-gradient(to right, var(--backgroundColor), var(--foregroundColor));
 	}
 
 	:global(#range_container .rangeHandle) {
