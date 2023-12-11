@@ -53,7 +53,7 @@
 	];
 
 	const MODES: string[] = ["automatic", "manual"];
-	const FORMATS: string[] = ["PNG", "WEBP"]
+	const FORMATS: string[] = ["PNG", "WEBP", "SVG"]
 	const BACKGROUND_COLORS: string[] = ["white", "black"]
 
 	const CROP_MIN_WIDTH = 20;
