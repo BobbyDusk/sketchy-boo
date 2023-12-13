@@ -53,8 +53,8 @@
 	];
 
 	const MODES: string[] = ["automatic", "manual"];
-	const FORMATS: string[] = ["PNG", "WEBP", "SVG"]
-	const BACKGROUND_COLORS: string[] = ["white", "black"]
+	const FORMATS: string[] = ["PNG", "WEBP", "SVG"];
+	const BACKGROUND_COLORS: string[] = ["white", "black"];
 
 	const CROP_MIN_WIDTH = 20;
 	const CROP_MIN_HEIGHT = 20;
@@ -105,20 +105,25 @@
 	let originalImageHeight: number;
 	let cropRealWidth: number;
 	let cropRealHeight: number;
+	let svgSimplify: boolean = true;
+	let svgApproximationLengthPercentage: number[] = [0.1];
+	let webpLossless: boolean = false;
+	let webpQuality: number[] = [75];
+	let webpMethod: number = 5;
 	let resizeWidthInput: HTMLInputElement;
 	let resizeHeightInput: HTMLInputElement;
 	let isImageLoading: boolean = false;
-	let format: string = "PNG"
+	let format: string = "PNG";
 
 	function updateResizeWidth() {
 		resizeWidth = Math.round(
-			(resizeHeight / cropRealHeight) * cropRealWidth
+			(resizeHeight / cropRealHeight) * cropRealWidth,
 		);
 	}
 
 	function updateResizeHeight() {
 		resizeHeight = Math.round(
-			(resizeWidth / cropRealWidth) * cropRealHeight
+			(resizeWidth / cropRealWidth) * cropRealHeight,
 		);
 	}
 
@@ -132,7 +137,7 @@
 
 	function transformScreenToimageCoordinates(num: number) {
 		return Math.round(
-			(originalImageHeight / originalImageBoundingBox.height) * num
+			(originalImageHeight / originalImageBoundingBox.height) * num,
 		);
 	}
 
@@ -142,10 +147,10 @@
 		originalImageBoundingBox
 	) {
 		cropRealWidth = transformScreenToimageCoordinates(
-			originalImageBoundingBox.width - cropLeft - cropRight
+			originalImageBoundingBox.width - cropLeft - cropRight,
 		);
 		cropRealHeight = transformScreenToimageCoordinates(
-			originalImageBoundingBox.height - cropTop - cropBottom
+			originalImageBoundingBox.height - cropTop - cropBottom,
 		);
 	}
 
@@ -210,7 +215,7 @@
 
 	function setProposedFileName(file: File) {
 		proposedFileName = `${getBaseFilenameWithoutExtension(
-			file.name
+			file.name,
 		)}_processed.${format.toLowerCase()}`;
 	}
 
@@ -259,6 +264,20 @@
 				edgeWhiteFilterMax: removeBackgroundEdgeWhiteFilterRange[1],
 				points,
 			};
+			let formatOptions = {};
+			if (format == "SVG") {
+				formatOptions = {
+					simplify: svgSimplify,
+					approximationLengthPercentage:
+						svgApproximationLengthPercentage[0],
+				};
+			} else if (format == "SVG") {
+				formatOptions = {
+					lossless: webpLossless,
+					quality: webpQuality[0],
+					method: webpMethod,
+				};
+			}
 			const data = {
 				image: originalImageBase64,
 				mode: selectedMode,
@@ -267,7 +286,8 @@
 				resize,
 				filterWhite,
 				removeBackground,
-				format
+				format,
+				formatOptions,
 			};
 			const response = await fetch(`${SERVER_URL}/upload`, {
 				method: "POST",
@@ -298,10 +318,10 @@
 		let img = new Image();
 		img.src = originalImageBase64!;
 		let pointX = Math.round(
-			(relativePointX / target.clientWidth) * img.width
+			(relativePointX / target.clientWidth) * img.width,
 		);
 		let pointY = Math.round(
-			(relativePointY / target.clientHeight) * img.height
+			(relativePointY / target.clientHeight) * img.height,
 		);
 		let point = [pointX, pointY];
 		points.push(point);
@@ -327,11 +347,11 @@
 		} else {
 			cropTop = Math.max(
 				0,
-				e.y - originalImageBoundingBox.top - cropMoveRelativeTop
+				e.y - originalImageBoundingBox.top - cropMoveRelativeTop,
 			);
 			cropBottom = Math.max(
 				0,
-				originalImageBoundingBox.bottom - e.y - cropMoveRelativeBottom
+				originalImageBoundingBox.bottom - e.y - cropMoveRelativeBottom,
 			);
 		}
 
@@ -351,11 +371,11 @@
 		} else {
 			cropLeft = Math.max(
 				0,
-				e.x - originalImageBoundingBox.left - cropMoveRelativeLeft
+				e.x - originalImageBoundingBox.left - cropMoveRelativeLeft,
 			);
 			cropRight = Math.max(
 				0,
-				originalImageBoundingBox.right - e.x - cropMoveRelativeRight
+				originalImageBoundingBox.right - e.x - cropMoveRelativeRight,
 			);
 		}
 	}
@@ -382,28 +402,28 @@
 			cropTop = Math.max(0, e.y - originalImageBoundingBox.top);
 			cropTop = Math.min(
 				cropTop,
-				originalImageBoundingBox.height - cropBottom - CROP_MIN_HEIGHT
+				originalImageBoundingBox.height - cropBottom - CROP_MIN_HEIGHT,
 			);
 		}
 		if (croppingDirs.includes(Dir.right)) {
 			cropRight = Math.max(0, originalImageBoundingBox.right - e.x);
 			cropRight = Math.min(
 				cropRight,
-				originalImageBoundingBox.width - cropLeft - CROP_MIN_WIDTH
+				originalImageBoundingBox.width - cropLeft - CROP_MIN_WIDTH,
 			);
 		}
 		if (croppingDirs.includes(Dir.bottom)) {
 			cropBottom = Math.max(0, originalImageBoundingBox.bottom - e.y);
 			cropBottom = Math.min(
 				cropBottom,
-				originalImageBoundingBox.height - cropTop - CROP_MIN_HEIGHT
+				originalImageBoundingBox.height - cropTop - CROP_MIN_HEIGHT,
 			);
 		}
 		if (croppingDirs.includes(Dir.left)) {
 			cropLeft = Math.max(0, e.x - originalImageBoundingBox.left);
 			cropLeft = Math.min(
 				cropLeft,
-				originalImageBoundingBox.width - cropRight - CROP_MIN_WIDTH
+				originalImageBoundingBox.width - cropRight - CROP_MIN_WIDTH,
 			);
 		}
 	}
@@ -432,19 +452,28 @@
 
 	$: disabledIfNoImage = condDisabled(!originalImageBase64);
 	$: disabledIfNoManual = condDisabled(
-		!originalImageBase64 || selectedMode != "manual"
+		!originalImageBase64 || selectedMode != "manual",
 	);
 	$: disabledIfNoRemoveBackground = condDisabled(!isRemoveBackgroundEnabled);
 	$: disabledIfNoEdgeWhiteFilter = condDisabled(
-		!isRemoveBackgroundEnabled || !isRemoveBackgroundEdgeWhiteFilterEnabled
+		!isRemoveBackgroundEnabled || !isRemoveBackgroundEdgeWhiteFilterEnabled,
 	);
 	$: disabledIfNoFilterWhite = condDisabled(!isFilterWhiteEnabled);
 	$: disabledIfNoResize = condDisabled(!isResizeEnabled);
 	$: disabledIfNotSolid = condDisabled(previewBackground != "solid");
-	$: disabledIfMultipleImages = condDisabled(processedImageSources.length > 1);
+	$: disabledIfMultipleImages = condDisabled(
+		processedImageSources.length > 1,
+	);
 </script>
 
-<div class="app_root" style={`--backgroundColor: ${selectedBackgroundColor == "white" ? "white" : "black"}; --foregroundColor: ${selectedBackgroundColor == "white" ? "black" : "white"}`}>
+<div
+	class="app_root"
+	style={`--backgroundColor: ${
+		selectedBackgroundColor == "white" ? "white" : "black"
+	}; --foregroundColor: ${
+		selectedBackgroundColor == "white" ? "black" : "white"
+	}`}
+>
 	<div class="left buttons_container">
 		<div class="button_group">
 			<div class="button_item">
@@ -612,7 +641,9 @@
 					name="enable_filter_white"
 					bind:checked={isFilterWhiteEnabled}
 				/>
-				<label for="enable_filter_white">filter {selectedBackgroundColor}</label>
+				<label for="enable_filter_white"
+					>filter {selectedBackgroundColor}</label
+				>
 			</div>
 			<div class="button_item {disabledIfNoFilterWhite}">
 				<label for="model">model:</label>
@@ -679,11 +710,7 @@
 		<div class="button_group {disabledIfNoImage}">
 			<div class="button_item">
 				<label for="format">output format:</label>
-				<select
-					name="format"
-					bind:value={format}
-					class="button-item"
-				>
+				<select name="format" bind:value={format} class="button-item">
 					{#each FORMATS as format}
 						<option value={format}>
 							{format}
@@ -693,6 +720,75 @@
 			</div>
 		</div>
 
+		<div class="button_group {disabledIfNoImage}">
+			{#if format == "SVG"}
+				<div class="button_item_horizontal">
+					<input
+						type="checkbox"
+						id="simplify_svg"
+						name="simplify_svg"
+						bind:checked={svgSimplify}
+					/>
+					<label for="simplify_svg">simplify svg</label>
+				</div>
+				<div class="button_item stretch {!svgSimplify && 'disabled'}">
+					<label for="approximation_length">
+						approximation length</label
+					>
+					<RangeSlider
+						id="range_container"
+						bind:values={svgApproximationLengthPercentage}
+						float
+						min={0}
+						max={1}
+						step={0.01}
+					/>
+				</div>
+			{:else if format == "WEBP"}
+				<div class="button_item_horizontal">
+					<input
+						type="checkbox"
+						id="lossless_webp"
+						name="lossless_webp"
+						bind:checked={webpLossless}
+					/>
+					<label for="lossless_webp">losless</label>
+				</div>
+				<div class="button_item stretch">
+					<label for="webp_quality">quality</label>
+					<RangeSlider
+						id="range_container"
+						bind:values={webpQuality}
+						float
+						min={0}
+						max={100}
+						step={1}
+					/>
+				</div>
+				<div class="button_item">
+					<label for="webp_method">method</label>
+					<select
+						name="webp_method"
+						bind:value={webpMethod}
+						class="button-item"
+					>
+						{#each Array(7).keys() as num}
+							<option value={num}>
+								{num}
+							</option>
+						{/each}
+					</select>
+				</div>
+				<a
+					href="https://pillow.readthedocs.io/en/stable/handbook/image-file-formats.html"
+					target="_blank"
+				>
+					See here for more info
+				</a>
+			{:else}
+				<p>No format settings</p>
+			{/if}
+		</div>
 
 		<div class="button_group {disabledIfNoImage}">
 			{#if isLoading}
@@ -951,7 +1047,11 @@
 
 	:global(#range_container) {
 		width: 100%;
-		background-image: linear-gradient(to right, var(--backgroundColor), var(--foregroundColor));
+		background-image: linear-gradient(
+			to right,
+			var(--backgroundColor),
+			var(--foregroundColor)
+		);
 	}
 
 	:global(#range_container .rangeHandle) {
@@ -1019,7 +1119,8 @@
 	}
 
 	.checkered {
-		background: -webkit-linear-gradient(
+		background:
+			-webkit-linear-gradient(
 				45deg,
 				rgba(0, 0, 0, 0.0980392) 25%,
 				transparent 25%,
@@ -1036,7 +1137,8 @@
 						)
 						0),
 			white;
-		background: -moz-linear-gradient(
+		background:
+			-moz-linear-gradient(
 				45deg,
 				rgba(0, 0, 0, 0.0980392) 25%,
 				transparent 25%,
@@ -1071,15 +1173,21 @@
 			),
 			white;
 		background-repeat: repeat, repeat;
-		background-position: 0px 0, 5px 5px;
+		background-position:
+			0px 0,
+			5px 5px;
 		-webkit-transform-origin: 0 0 0;
 		transform-origin: 0 0 0;
 		-webkit-background-origin: padding-box, padding-box;
 		background-origin: padding-box, padding-box;
 		-webkit-background-clip: border-box, border-box;
 		background-clip: border-box, border-box;
-		-webkit-background-size: 10px 10px, 10px 10px;
-		background-size: 10px 10px, 10px 10px;
+		-webkit-background-size:
+			10px 10px,
+			10px 10px;
+		background-size:
+			10px 10px,
+			10px 10px;
 		-webkit-box-shadow: none;
 		box-shadow: none;
 		text-shadow: none;
