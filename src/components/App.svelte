@@ -81,11 +81,14 @@
 	let filterWhiteRange: number[] = [230, 255];
 	let originalImageBase64: string | null = null;
 	let processedImageSources: string[] = [];
+	let processedImages: HTMLImageElement[] = [];
+	let processedImagesData: { width: number; height: number; size: number }[] =
+		[];
 	let processedZip: string;
 	let proposedFileName: string = "processed.png";
 	let points: number[][] = [];
 	let isLoading: boolean = false;
-	let previewBackground: string = "solid";
+	let previewBackground: string = "checkered";
 	let previewBackgroundColor: string = "#000000";
 	let fileName: string;
 	let originalImage: HTMLImageElement;
@@ -169,6 +172,20 @@
 		cropBox.style.left = `${Math.round(left)}px`;
 		cropBox.style.height = `${Math.round(height)}px`;
 		cropBox.style.width = `${Math.round(width)}px`;
+	}
+
+	$: for (let i = 0; i < processedImageSources.length; i++) {
+		let img = new Image();
+
+		img.onload = function () {
+			var height = img.height;
+			var width = img.width;
+		 	// file size in bytes, assuming source is base64
+			var size = processedImageSources[i].length * (3 / 4);
+			processedImagesData[i] = { width, height, size };
+		};
+
+		img.src = processedImageSources[i];
 	}
 
 	function getBase64Image(file: File): Promise<any> {
@@ -271,7 +288,7 @@
 					approximationLengthPercentage:
 						svgApproximationLengthPercentage[0],
 				};
-			} else if (format == "SVG") {
+			} else if (format == "WEBP") {
 				formatOptions = {
 					lossless: webpLossless,
 					quality: webpQuality[0],
@@ -938,15 +955,32 @@
 		</div>
 	</div>
 	<div class="image_container right">
-		{#each processedImageSources as processedImageSource}
-			<img
-				src={processedImageSource}
-				class="image {previewBackground}"
-				alt="processed img"
-				style={previewBackground == "solid"
-					? `background-color: ${previewBackgroundColor}`
-					: ""}
-			/>
+		{#each processedImageSources as processedImageSource, i}
+			<div class="image_card">
+				<img
+					src={processedImageSource}
+					class="image {previewBackground}"
+					alt="processed img"
+					style={previewBackground == "solid"
+						? `background-color: ${previewBackgroundColor}`
+						: ""}
+					bind:this={processedImages[i]}
+				/>
+				{#if processedImagesData[i]}
+					<div class="image_data">
+						<p>{processedImagesData[i].width}x{processedImagesData[i].height}</p>
+						<p>
+							{#if processedImagesData[i].size < 1000}
+								{Math.round(processedImagesData[i].size)}B
+							{:else if processedImagesData[i].size < 1000000}
+								{Math.round(processedImagesData[i].size / 1000)}kB
+							{:else}
+								{Math.round(processedImagesData[i].size / 1000000)}MB
+							{/if}
+						</p>
+					</div>
+				{/if}
+			</div>
 		{/each}
 	</div>
 </div>
@@ -1347,5 +1381,24 @@
 
 	.file_input {
 		display: none;
+	}
+
+	.image_card {
+		position: relative;
+	}
+	.image_data {
+		position: absolute;
+		top: 0;
+		right: 0;
+		z-index: 2;
+		background-color: hsla(0, 100%, 100%, 0.8);
+		margin: 0;
+		padding: 5px 10px;
+		display: flex;
+		flex-direction: column;
+		align-items: end;
+	}
+	.image_data p {
+		margin: 2px;
 	}
 </style>
