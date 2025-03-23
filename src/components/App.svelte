@@ -1,27 +1,5 @@
 <script lang="ts">
-	// TODO: remove write in outline of image, maybe using rembg alpha metting?
-	// TODO: crop rotate
-	// TODO: completely redraw crop box by dragging anywhere in the image
-	// TODO: mask using path
-	// TODO: add hover tooltips using <div title="...">
-	// TODO: auto crop, automatically detect if background is removed through whiteFilter or removeBackground
-	// if so, crop based on transparency, if not, crop based on white
-	// TODO: Create feature that allows to scan paper with different square boxes, that then automatically detects square boxes,
-	// crops and removes background from whatever is inside and return all the images in a zipped file, maybe even have something
-	// with automatic naming of the file. For example, that you can just write the name in a different box, that it
-	// detect handwriting and then converts it the correct name. Also include the ability to add number, which represents the layer
-	// number and then automatically place all the layers in affinity in the correct order
-	// TODO: have two modes: manual and automatic.
-	// manual let's you completely define everything yourself.
-	// automatic automatically finds the different objects, crops then and removes background
-	// maybe also have the ability to show the results one by one together with the ability to name
-	// it and tweak the settings
-	// TODO: use processedImage as source for further processing
-	// TODO: click image -> open modal with download button
-	// TODO: hover over image -> 2 buttons: show modal and download
-	// TODO choice between actual size of image or real size of image. See css classes .actual-size and .contained-size
 
-	// @ts-ignore
 	import RangeSlider from "svelte-range-slider-pips";
 	let SERVER_URL: string;
 	if (import.meta.env.PROD) {
@@ -29,12 +7,14 @@
 	} else {
 		SERVER_URL = "http://localhost:8000";
 	}
+
 	enum Dir {
 		top,
 		right,
 		bottom,
 		left,
 	}
+
 	const WHITE_FILTER_MODELS: string[] = [
 		"pillow",
 		"luminocity",

@@ -10,12 +10,16 @@
     "astro": "astro"
   },
   "dependencies": {
-    "@astrojs/svelte": "^3.1.0",
-    "astro": "^2.8.5",
-    "svelte": "^4.0.5",
-    "svelte-range-slider-pips": "^2.2.2"
+    "@astrojs/svelte": "^7.0.7",
+    "@tailwindcss/vite": "^4.0.15",
+    "astro": "^5.5.4",
+    "svelte": "^5.25.2",
+    "svelte-range-slider-pips": "^3.2.2",
+    "tailwindcss": "^4.0.15",
+    "typescript": "^5.8.2"
   },
   "devDependencies": {
-    "@types/svelte-range-slider-pips": "^2.0.0"
-  }
+    "@types/svelte-range-slider-pips": "^2.0.4"
+  },
+  "packageManager": "pnpm@10.6.5"
 }

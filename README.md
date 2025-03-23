@@ -1,54 +1,23 @@
-# Astro Starter Kit: Basics
+# Digitizer
 
-```
-npm create astro@latest -- --template basics
-```
+## TODO
 
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/withastro/astro/tree/latest/examples/basics)
-[![Open with CodeSandbox](https://assets.codesandbox.io/github/button-edit-lime.svg)](https://codesandbox.io/p/sandbox/github/withastro/astro/tree/latest/examples/basics)
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/withastro/astro?devcontainer_path=.devcontainer/basics/devcontainer.json)
-
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
-
-![basics](https://user-images.githubusercontent.com/4677417/186188965-73453154-fdec-4d6b-9c34-cb35c248ae5b.png)
-
-## 🚀 Project Structure
-
-Inside of your Astro project, you'll see the following folders and files:
-
-```
-/
-├── public/
-│   └── favicon.svg
-├── src/
-│   ├── components/
-│   │   └── Card.astro
-│   ├── layouts/
-│   │   └── Layout.astro
-│   └── pages/
-│       └── index.astro
-└── package.json
-```
-
-Astro looks for `.astro` or `.md` files in the `src/pages/` directory. Each page is exposed as a route based on its file name.
-
-There's nothing special about `src/components/`, but that's where we like to put any Astro/React/Vue/Svelte/Preact components.
-
-Any static assets, like images, can be placed in the `public/` directory.
-
-## 🧞 Commands
-
-All commands are run from the root of the project, from a terminal:
-
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:3000`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
-
-## 👀 Want to learn more?
-
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+	- completely redraw crop box by dragging anywhere in the image
+	- mask using path
+	- add hover tooltips using <div title="...">
+	- auto crop, automatically detect if background is removed through whiteFilter or removeBackground 
+	- if so, crop based on transparency, if not, crop based on white
+	- Create feature that allows to scan paper with different square boxes, that then automatically detects square boxes,
+	crops and removes background from whatever is inside and return all the images in a zipped file, maybe even have something
+	with automatic naming of the file. For example, that you can just write the name in a different box, that it
+	detect handwriting and then converts it the correct name. Also include the ability to add number, which represents the layer
+	number and then automatically place all the layers in affinity in the correct order
+	- have two modes: manual and automatic.
+	manual let's you completely define everything yourself.
+	automatic automatically finds the different objects, crops then and removes background
+	maybe also have the ability to show the results one by one together with the ability to name
+	it and tweak the settings
+	- use processedImage as source for further processing
+	- click image -> open modal with download button
+	- hover over image -> 2 buttons: show modal and download
+	- choice between actual size of image or real size of image. See css classes .actual-size and .contained-size
