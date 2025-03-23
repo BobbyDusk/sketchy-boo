@@ -21,3 +21,7 @@
 	- click image -> open modal with download button
 	- hover over image -> 2 buttons: show modal and download
 	- choice between actual size of image or real size of image. See css classes .actual-size and .contained-size
+
+## License
+
+This project is licensed under the AGPL-3.0 License - see the [LICENSE](LICENSE) file for details
