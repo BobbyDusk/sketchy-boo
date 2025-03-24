@@ -463,7 +463,9 @@ You should have received a copy of the GNU General Public License along with Dig
     selectedBackgroundColor == "white" ? "white" : "black"
   }; --foregroundColor: ${
     selectedBackgroundColor == "white" ? "black" : "white"
-  }`}
+  };
+  height: calc(100vh - var(--header-height));`
+  }
 >
   <div class="left buttons_container">
     <div class="button_group">
@@ -952,13 +954,11 @@ You should have received a copy of the GNU General Public License along with Dig
 <style>
   .app_root {
     width: 100vw;
-    height: 100vh;
     display: grid;
     grid-template-columns: 1fr 3fr 3fr 1fr;
     column-gap: 15px;
     box-sizing: border-box;
     font-size: 10pt;
-    background-color: white;
   }
 
   .buttons_container {

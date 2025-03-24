@@ -1,0 +1,21 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+    --accent: 124, 58, 237;
+    --accent-gradient: linear-gradient(45deg,
+            rgb(var(--accent)),
+            #da62c4 30%,
+            white 60%);
+    --header-height: 60px;
+}
+
+html {
+    font-family: system-ui, sans-serif;
+}
+
+body {
+    width: 100vw;
+    margin: 0;
+}
