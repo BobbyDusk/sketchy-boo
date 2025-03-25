@@ -65,3 +65,7 @@ ul {
 ul li {
     margin-left: 2rem;
 }
+
+a {
+    text-decoration: underline;
+}
