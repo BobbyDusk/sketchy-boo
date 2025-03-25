@@ -11,11 +11,57 @@
     --header-height: 60px;
 }
 
+*, *::before, *::after {
+    box-sizing: border-box;
+    /* outline: 1px solid lime; */ /* Uncomment to debug layout */
+}
+
 html {
-    font-family: system-ui, sans-serif;
+    font-family: "Montserrat", sans-serif;
+    font-optical-sizing: auto;
+    font-style: normal;
 }
 
 body {
-    width: 100vw;
+    width: 100%;
     margin: 0;
+    padding: 0;
+}
+
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+li {
+    margin: 0;
+    padding: 0;
+    font-weight: 300;
+}
+
+h1 {
+    font-size: 2rem;
+    font-weight: 400;
+}
+
+h2 {
+    font-size: 1.75rem;
+}
+
+h3 {
+    font-size: 1.5rem;
+}
+
+h4 {
+    font-size: 1.5rem;
+}
+
+ul {
+    list-style-type: disc;
+}
+
+ul li {
+    margin-left: 2rem;
 }
