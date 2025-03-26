@@ -15,6 +15,8 @@ import Layout from "../layouts/Layout.astro";
 import Back from "../components/Back.astro";
 import InfoSection from "../components/InfoSection.astro";
 import LinkButton from "../components/LinkButton.astro";
+import { Image } from "astro:assets";
+import headshot from "../assets/headshot.jpg";
 ---
 
 <Layout title="Privacy Policy">
@@ -30,6 +32,8 @@ import LinkButton from "../components/LinkButton.astro";
           >Bobby Dusk</a
         > under the company <a href="https://edgeofdusk.com">Edge of Dusk</a>.
       </p>
+      <Image src={headshot} alt="Bobby Dusk" width="150" height="150" class="rounded-xl self-center" />
+      <p class="text-center italic self-center">Hi. This is me.</p>
     </InfoSection>
     <InfoSection title="Donations">
       <p>
