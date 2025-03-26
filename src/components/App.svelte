@@ -953,7 +953,7 @@ You should have received a copy of the GNU General Public License along with Dig
 
 <style>
   .app_root {
-    width: 100vw;
+    width: 100%;
     display: grid;
     grid-template-columns: 1fr 3fr 3fr 1fr;
     column-gap: 15px;

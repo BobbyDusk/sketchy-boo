@@ -2,7 +2,7 @@
 
 Digitizer is a tool for converting scans of physical artwork into digitital assets.
 
-_Note that this is frontend only. The backend is located at [https://github.com/BobbyDusk/digitizer-backend](https://github.com/BobbyDusk/digitizer-backend)
+_Note that this is frontend only. The backend is located at [https://github.com/BobbyDusk/digitizer-backend](https://github.com/BobbyDusk/digitizer-backend)_
 
 ## TODO
 

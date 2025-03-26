@@ -1,0 +1,35 @@
+---
+/*
+Copyright (C) 2023 Edge of Dusk
+
+This file is part of Digitizer.
+
+Digitizer is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+
+Digitizer is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with Digitizer. If not, see <https://www.gnu.org/licenses/>.
+*/
+
+interface Props {
+  href: string;
+  backgroundColor?: string;
+  color: string;
+  target?: string;
+  classes? : string;
+}
+
+const { href, backgroundColor, color, target, classes} = Astro.props;
+---
+
+<a
+    href={href}
+  class={"flex flex-row gap-2 px-4 py-2 rounded-md cursor-pointer items-center justify-center " + classes}
+  style={`background-color: ${backgroundColor || "gray"}; color: ${color || "white"}; text-decoration: none;`}
+  target={target || "_blank"}
+>
+    <div class="h-6 w-6">
+        <slot name="icon" />
+    </div>
+  <slot />
+</a>
