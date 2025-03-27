@@ -17,6 +17,8 @@ import InfoSection from "../components/InfoSection.astro";
 import LinkButton from "../components/LinkButton.astro";
 import { Image } from "astro:assets";
 import headshot from "../assets/headshot.jpg";
+import PatreonButton from "../components/PatreonButton.astro";
+import LiberapayButton from "../components/LiberapayButton.astro";
 ---
 
 <Layout title="Privacy Policy">
@@ -32,7 +34,13 @@ import headshot from "../assets/headshot.jpg";
           >Bobby Dusk</a
         > under the company <a href="https://edgeofdusk.com">Edge of Dusk</a>.
       </p>
-      <Image src={headshot} alt="Bobby Dusk" width="150" height="150" class="rounded-xl self-center" />
+      <Image
+        src={headshot}
+        alt="Bobby Dusk"
+        width="150"
+        height="150"
+        class="rounded-xl self-center"
+      />
       <p class="text-center italic self-center">Hi. This is me.</p>
     </InfoSection>
     <InfoSection title="Donations">
@@ -45,62 +53,13 @@ import headshot from "../assets/headshot.jpg";
         following methods.
       </p>
       <br />
-      <LinkButton
-        href="https://liberapay.com/edgeofdusk"
-        backgroundColor="#f6c915"
-        color="black"
-        classes="self-center justify-self-center"
-      >
-        Liberapay
-        <svg
-          slot="icon"
-          viewBox="0 0 80 80"
-          version="1.1"
-          id="svg2"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <defs id="defs2"></defs>
-          <g
-            transform="matrix(1.1014689,0,0,1.1014689,-90.38136,-233.23038)"
-            fill="#1a171b"
-            id="g2"
-            style="fill:#000000;fill-opacity:1"
-          >
-            <path
-              d="m 104.28,271.1 c -3.571,0 -6.373,-0.466 -8.41,-1.396 -2.037,-0.93 -3.495,-2.199 -4.375,-3.809 -0.88,-1.609 -1.308,-3.457 -1.282,-5.544 0.025,-2.086 0.313,-4.311 0.868,-6.675 l 9.579,-40.05 11.69,-1.81 -10.484,43.44 c -0.202,0.905 -0.314,1.735 -0.339,2.489 -0.026,0.754 0.113,1.421 0.415,1.999 0.302,0.579 0.817,1.044 1.546,1.395 0.729,0.353 1.747,0.579 3.055,0.679 l -2.263,9.278"
-              id="path1"
-              style="fill:#000000;fill-opacity:1"></path>
-            <path
-              d="m 146.52,246.14 c 0,3.671 -0.604,7.03 -1.811,10.07 -1.207,3.043 -2.879,5.669 -5.01,7.881 -2.138,2.213 -4.702,3.935 -7.693,5.167 -2.992,1.231 -6.248,1.848 -9.767,1.848 -1.71,0 -3.42,-0.151 -5.129,-0.453 l -3.394,13.651 h -11.162 l 12.52,-52.19 c 2.01,-0.603 4.311,-1.143 6.901,-1.622 2.589,-0.477 5.393,-0.716 8.41,-0.716 2.815,0 5.242,0.428 7.278,1.282 2.037,0.855 3.708,2.024 5.02,3.507 1.307,1.484 2.274,3.219 2.904,5.205 0.627,1.987 0.942,4.11 0.942,6.373 m -27.378,15.461 c 0.854,0.202 1.91,0.302 3.167,0.302 1.961,0 3.746,-0.364 5.355,-1.094 1.609,-0.728 2.979,-1.747 4.111,-3.055 1.131,-1.307 2.01,-2.877 2.64,-4.714 0.628,-1.835 0.943,-3.858 0.943,-6.071 0,-2.161 -0.479,-3.998 -1.433,-5.506 -0.956,-1.508 -2.615,-2.263 -4.978,-2.263 -1.61,0 -3.118,0.151 -4.525,0.453 l -5.28,21.948"
-              id="path2"
-              style="fill:#000000;fill-opacity:1"></path>
-          </g>
-        </svg>
-      </LinkButton>
+      <LiberapayButton />
       <p class="text-center w-8/10 italic self-center">
         If possible, please choose this method, as liberpay is an awesome
         open-source project that leaves us with the greatest amount after fees.
       </p>
       <br />
-      <LinkButton
-        href="https://www.patreon.com/c/edgeofdusk"
-        backgroundColor="#f96854"
-        color="black"
-        classes="self-center"
-      >
-        Patreon
-        <svg
-          slot="icon"
-          viewBox="0 0 512 512"
-          version="1.1"
-          id="svg1"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            d="M489.7 153.8c-.1-65.4-51-119-110.7-138.3C304.8-8.5 207-5 136.1 28.4C50.3 68.9 23.3 157.7 22.3 246.2C21.5 319 28.7 510.6 136.9 512c80.3 1 92.3-102.5 129.5-152.3c26.4-35.5 60.5-45.5 102.4-55.9c72-17.8 121.1-74.7 121-150z"
-            id="path1"></path>
-        </svg>
-      </LinkButton>
+      <PatreonButton />
       <br />
       <p>
         You can donate directly through a bank transfer to the following
@@ -111,7 +70,8 @@ import headshot from "../assets/headshot.jpg";
       <p class="self-center">BIC: <b>ARSPBE22XXX</b></p>
       <p class="self-center italic text-center">
         If you require a donation receipt, please contact us at <a
-          href="mailto:info@markan.games">info@edgeofdusk.com</a
+          href="mailto:info@markan.games"
+          target="_blank">info@edgeofdusk.com</a
         >.
       </p>
     </InfoSection>
@@ -119,26 +79,33 @@ import headshot from "../assets/headshot.jpg";
       <p>
         The project is free and open source. The <a
           href="https://https://github.com/BobbyDusk/digitizer-frontend"
-          >frontend is developed under the AGPLv3 license, while the <a
-            href="https://github.com/BobbyDusk/digitizer-backend">backend</a
-          > is developed under the MIT license.</a
-        >
-        <p>Copyright (C) 2023 Edge of Dusk</p>
-        <p>Company Info:</p>
-        <ul>
-          <li>Name: Edge of Dusk</li>
-          <li>Address: Hopstraat 1, 1742 Ternat, Belgium</li>
-          <li>
-            Email: <a href="mailto:info@edgeofdusk.com">info@edgeofdusk.com</a>
-          </li>
-          <li>
-            VAT Number: <a
-              href="https://kbopub.economie.fgov.be/kbopub/toonondernemingps.html?ondernemingsnummer=803864734"
-              >BE0803.864.734</a
-            >
-          </li>
-        </ul>
+          target="_blank">frontend</a
+        > is developed under the AGPLv3 license, while the <a
+          href="https://github.com/BobbyDusk/digitizer-backend"
+          target="_blank">backend</a
+        > is developed under the MIT license.
       </p>
+      <p>Copyright (C) 2023 Edge of Dusk</p>
+      <p>Company Info:</p>
+      <ul>
+        <li>Name: Edge of Dusk</li>
+        <li>
+          Website: <a href="https://edgeofdusk.com" target="_blank"
+            >edgeofdusk.com</a>
+        </li>
+        <li>Address: Hopstraat 1, 1742 Ternat, Belgium</li>
+        <li>
+          Email: <a href="mailto:info@edgeofdusk.com" target="_blank"
+            >info@edgeofdusk.com</a
+          >
+        </li>
+        <li>
+          VAT Number: <a
+            href="https://kbopub.economie.fgov.be/kbopub/toonondernemingps.html?ondernemingsnummer=803864734"
+            target="_blank">BE0803.864.734</a
+          >
+        </li>
+      </ul>
     </InfoSection>
   </main>
 </Layout>
