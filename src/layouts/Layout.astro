@@ -21,23 +21,28 @@ Digitizer is free software: you can redistribute it and/or modify it under the t
 Digitizer is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with Digitizer. If not, see <https://www.gnu.org/licenses/>.
--->
-
-<!doctype html>
+--><!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="description" content="Digitizer" />
     <meta name="viewport" content="width=device-width" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="generator" content={Astro.generator} />
     <title>{title}</title>
 
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+
     <!-- Font -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
-    
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap"
+      rel="stylesheet"
+    />
+
     <!-- Light / Dark mode -->
     <script>
       // see https://tailwindcss.com/docs/dark-mode#toggling-dark-mode-manually
@@ -49,7 +54,9 @@ You should have received a copy of the GNU General Public License along with Dig
       );
     </script>
   </head>
-  <body class="bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100">
+  <body
+    class="bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100"
+  >
     <Header />
     <slot />
     {showFooter && <Footer />}

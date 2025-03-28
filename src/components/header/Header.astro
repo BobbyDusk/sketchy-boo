@@ -13,6 +13,9 @@ You should have received a copy of the GNU General Public License along with Dig
 
 import DarkLightMode from "./DarkLightMode.svelte";
 import DonateDropdown from "./DonateDropdown.astro";
+import icon from "../../assets/icon.png";
+import iconInverted from "../../assets/icon_inverted.png";
+import { Image } from "astro:assets";
 ---
 
 <header
@@ -23,10 +26,27 @@ import DonateDropdown from "./DonateDropdown.astro";
     <DarkLightMode client:load />
   </div>
   <div>
-    <h1>Digitizer</h1>
+    <Image
+      src={icon}
+      alt="Digitizer logo"
+      width={48}
+      height={48}
+      class="dark:hidden"
+    />
+    <Image
+      src={iconInverted}
+      alt="Digitizer logo"
+      width={48}
+      height={48}
+      class="hidden dark:block"
+    />
   </div>
   <div class="flex flex-row gap-2 justify-center items-center">
-    <a href="/help" class="text-neutral-500 dark:text-neutral-400" aria-label="Help">
+    <a
+      href="/help"
+      class="text-neutral-500 dark:text-neutral-400"
+      aria-label="Help"
+    >
       <svg
         xmlns="http://www.w3.org/2000/svg"
         height="24px"
@@ -38,7 +58,11 @@ import DonateDropdown from "./DonateDropdown.astro";
         ></path></svg
       >
     </a>
-    <a href="/about" class="text-neutral-500 dark:text-neutral-400" aria-label="Help">
+    <a
+      href="/about"
+      class="text-neutral-500 dark:text-neutral-400"
+      aria-label="Help"
+    >
       <svg
         xmlns="http://www.w3.org/2000/svg"
         height="24px"
