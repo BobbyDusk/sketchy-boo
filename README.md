@@ -1,6 +1,6 @@
 # Sketchy Boo
 
-![Sketchy Boo](/public/android-chrome-192x192.png)
+![Sketchy Boo](public/android-chrome-192x192.png)
 
 Sketchy Boo is a tool for converting scans of physical artwork into digitital assets.
 
