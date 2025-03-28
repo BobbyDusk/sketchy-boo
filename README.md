@@ -1,6 +1,6 @@
 # Sketchy Boo
 
-<img src="icon.png" alt="Sketchy Boo" width="300">
+<img src="banner.jpg" alt="Sketchy Boo" width="800">
 
 Sketchy Boo is a tool for converting scans of physical artwork into digitital assets. You can start using at at [https://sketchy.boo](https://sketchy.boo).
 
@@ -8,6 +8,7 @@ _Note that this is frontend only. The backend is located at [https://github.com/
 
 ## TODO
 
+	- Add levels editing to crush blacks and/or crush whites
 	- completely redraw crop box by dragging anywhere in the image
 	- mask using path
 	- add hover tooltips using <div title="...">
