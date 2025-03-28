@@ -1,8 +1,10 @@
-# Digitizer Frontend
+# Sketchy Boo
 
-Digitizer is a tool for converting scans of physical artwork into digitital assets.
+![Sketchy Boo](/public/android-chrome-192x192.png)
 
-_Note that this is frontend only. The backend is located at [https://github.com/BobbyDusk/digitizer-backend](https://github.com/BobbyDusk/digitizer-backend)_
+Sketchy Boo is a tool for converting scans of physical artwork into digitital assets.
+
+_Note that this is frontend only. The backend is located at [https://github.com/BobbyDusk/sketchy-boo-backend](https://github.com/BobbyDusk/sketchy-boo-backend)_
 
 ## TODO
 
