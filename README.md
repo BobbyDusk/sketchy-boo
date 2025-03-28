@@ -2,7 +2,7 @@
 
 <img src="icon.png" alt="Sketchy Boo" width="300">
 
-Sketchy Boo is a tool for converting scans of physical artwork into digitital assets.
+Sketchy Boo is a tool for converting scans of physical artwork into digitital assets. You can start using at at [https://sketchy.boo](https://sketchy.boo).
 
 _Note that this is frontend only. The backend is located at [https://github.com/BobbyDusk/sketchy-boo-backend](https://github.com/BobbyDusk/sketchy-boo-backend)_
 
