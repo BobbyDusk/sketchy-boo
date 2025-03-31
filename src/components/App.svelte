@@ -1,20 +1,20 @@
 <!--
 Copyright (C) 2023 Edge of Dusk
 
-This file is part of Digitizer.
+This file is part of Sketchy Boo.
 
-Digitizer is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+Sketchy Boo is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
-Digitizer is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+Sketchy Boo is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License along with Digitizer. If not, see <https://www.gnu.org/licenses/>.
+You should have received a copy of the GNU General Public License along with Sketchy Boo. If not, see <https://www.gnu.org/licenses/>.
 -->
 
 <script lang="ts">
   import RangeSlider from "svelte-range-slider-pips";
   let SERVER_URL: string;
   if (import.meta.env.PROD) {
-    SERVER_URL = "https://api.edgeofdusk.com/digitizer";
+    SERVER_URL = "https://api.edgeofdusk.com/Sketchy Boo";
   } else {
     SERVER_URL = "http://localhost:8000";
   }

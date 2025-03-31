@@ -6,7 +6,7 @@ import svelte from "@astrojs/svelte";
 export default defineConfig({
   integrations: [svelte()],
   sitemap: true,
-  site: "https://digitizer.edgeofdusk.com/",
+  site: "https://sketchy.boo/",
   vite: {
     plugins: [tailwindcss()],
   },
