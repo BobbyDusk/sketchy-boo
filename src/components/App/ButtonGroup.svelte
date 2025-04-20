@@ -1,0 +1,16 @@
+<script lang="ts">
+  /*
+  Copyright (C) 2023 Edge of Dusk
+
+  This file is part of Sketchy Boo.
+
+  Sketchy Boo is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+
+  Sketchy Boo is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License along with Sketchy Boo. If not, see <https://www.gnu.org/licenses/>.
+  */
+</script>
+<div class="flex flex-column justify-center items-center gap-2 rounded-md p-4 bg-neutral-200 dark:bg-neutral-700">
+    <slot></slot>
+</div>
